@@ -1,0 +1,78 @@
+<section class="page-banner">
+    <div class="image-layer" style="background-image:url(images/background/bg-banner-1.jpg);"></div>
+    <div class="bottom-rotten-curve"></div>
+
+    <div class="auto-container">
+        <h1>{page_title}</h1>
+        <ul class="bread-crumb clearfix">
+            <li><a href="/">Home</a></li>
+            <li><a href="/events">Events</a></li>
+            <li class="active">Details</li>
+        </ul>
+    </div>
+</section>
+
+<div class="sidebar-page-container">
+    <div class="auto-container">
+        <div class="row clearfix">
+
+            <div class="content-side col-lg-8 col-md-12 col-sm-12">
+                <div class="event-details">
+                    <div class="inner-box">
+                        <div class="image-box">
+                            <figure class="image"><img src="{page_image}" alt="{page_title}"></figure>
+                            <div class="date">{day} <span class="month">{month}</span></div>
+                        </div>
+                        <div class="lower-content">
+                            <h2>{page_title}</h2>
+                            
+                            <ul class="info clearfix">
+                                <li><span class="icon far fa-clock"></span> {time}</li>
+                                <li><span class="icon fa fa-map-marker-alt"></span> {location}</li>
+                            </ul>
+                            
+                            <div class="text-content">
+                                {content}
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-side col-lg-4 col-md-12 col-sm-12">
+                <aside class="sidebar">
+                    <div class="sidebar-widget search-box">
+                        <h3 class="sidebar-title">Search</h3>
+                        <form method="get" action="/">
+                            <div class="form-group">
+                                <input type="search" name="s" value="" placeholder="Search..." required>
+                                <button type="submit"><span class="icon flaticon-search-1"></span></button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="sidebar-widget categories">
+                        <h3 class="sidebar-title">Programs</h3>
+                        <div class="widget-content">
+                            <ul>
+                                <li><a href="/education">Education</a></li>
+                                <li><a href="/empowerment">Empowerment</a></li>
+                                <li><a href="/elderly-care">Elderly Care</a></li>
+                                <li><a href="/environment">Environment</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="call-to-action-two">
+    <div class="auto-container">
+        <div class="inner clearfix">
+            <div class="title-box"><h2>Become A Volunteer</h2></div>
+            <div class="link-box"><a href="/contact" class="theme-btn btn-style-five"><span class="btn-title">Get Involved</span></a></div>
+        </div>
+    </div>
+</section>

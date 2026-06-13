@@ -1,0 +1,96 @@
+<section class="page-banner">
+    <div class="image-layer" style="background-image:url(images/background/bg-banner-1.jpg);"></div>
+    <div class="bottom-rotten-curve"></div>
+    <div class="auto-container">
+        <h1>{page_title}</h1>
+        <ul class="bread-crumb clearfix">
+            <li><a href="/">Home</a></li>
+            <li class="active">{page_title}</li>
+        </ul>
+    </div>
+</section>
+
+<section class="sidebar-page-container" style="padding: 80px 0; background: #fdfdfd;">
+    <div class="auto-container">
+        
+        <div class="sec-title centered" style="text-align: center; margin-bottom: 50px;">
+            <h2 style="font-size: 36px; color: #222; margin-bottom: 15px;">Making A Difference</h2>
+           <div class="text">
+    {content}
+</div>
+        </div>
+
+        <div class="program-tabs-container">
+            <button id="btn-gallery" class="program-tab active" onclick="assraSwitchTab('gallery', this)">Gallery</button>
+            <button id="btn-events"  class="program-tab" onclick="assraSwitchTab('events', this)">Events</button>
+            <button id="btn-blogs"   class="program-tab" onclick="assraSwitchTab('blogs', this)">Updates</button>
+        </div>
+
+        <div id="tab-gallery" class="assra-tab-content" style="display: block;">
+    
+    [year_filter]
+
+    <div class="row clearfix">
+        [universal_loop type="gallery" count="12" pagination="true"]
+            
+            <div class="col-lg-4 col-md-6 col-sm-12" style="margin-bottom: 30px;">
+                <div class="gallery-block-two" style="box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; background: #fff; transition: transform 0.3s;">
+                    <div class="image-box" style="position: relative; overflow: hidden; height: 260px;">
+                        
+                        <img src="{image}" alt="{title}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+                        
+                        <a href="{image}" class="lightbox-image" data-fancybox="gallery" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:5;"></a>
+                    </div>
+                    <div class="lower-content" style="padding: 15px; text-align: center; border-top: 1px solid #eee;">
+                        <h5 style="margin: 0; font-size: 18px; color: #333;">{title}</h5>
+                    </div>
+                </div>
+            </div>
+
+        [/universal_loop]
+    </div>
+</div>
+
+        <div id="tab-events" class="assra-tab-content" style="display: none;">
+            <div class="row clearfix">
+                [universal_loop type="event"]
+                    <div class="col-lg-12 col-md-12 col-sm-12" style="margin-bottom: 30px;">
+                        <div class="event-block-list" style="display: flex; background: #fff; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden; border: 1px solid #eee;">
+                            <div class="image-col" style="width: 300px; flex-shrink: 0;">
+                                <img src="{image}" style="width: 100%; height: 100%; object-fit: cover; min-height: 200px;">
+                            </div>
+                            <div class="content-col" style="padding: 30px; flex-grow: 1;">
+                                <div class="date" style="color: #1a365d; font-weight: 700; margin-bottom: 5px; text-transform: uppercase; font-size: 14px;">
+                                    {day} {month} {year}
+                                </div>
+                                <h3 style="margin-bottom: 10px;"><a href="{link}" style="color: #222; text-decoration: none;">{title}</a></h3>
+                                <p style="color: #777; margin-bottom: 20px;">{text}</p>
+                                <a href="{link}" class="theme-btn" style="color: #28a745; font-weight: 600; text-decoration: none;">Read Details &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+                [/universal_loop]
+            </div>
+        </div>
+
+        <div id="tab-blogs" class="assra-tab-content" style="display: none;">
+            <div class="row clearfix">
+                [universal_loop type="post"]
+                     <div class="col-lg-4 col-md-6 col-sm-12" style="margin-bottom: 30px;">
+                        <div class="news-block" style="background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                            <div class="image-box" style="height: 220px;">
+                                <a href="{link}"><img src="{image}" style="width: 100%; height: 100%; object-fit: cover;" /></a>
+                            </div>
+                            <div class="lower-content" style="padding: 25px;">
+                                <div class="date" style="font-size: 13px; color: #999; margin-bottom: 5px;">{day} {month}</div>
+                                <h4 style="margin-bottom: 15px;"><a href="{link}" style="color: #333; text-decoration: none;">{title}</a></h4>
+                                <div class="text" style="color: #777; font-size: 14px;">{text}</div>
+                            </div>
+                        </div>
+                    </div>
+                [/universal_loop]
+            </div>
+        </div>
+
+    </div>
+</section>

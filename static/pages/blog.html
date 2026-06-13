@@ -1,0 +1,110 @@
+<section class="page-banner">
+    <div class="image-layer" style="background-image:url(images/background/bg-banner-1.jpg);"></div>
+    <div class="bottom-rotten-curve"></div>
+
+    <div class="auto-container">
+        <h1>Latest Updates</h1>
+        <ul class="bread-crumb clearfix">
+            <li><a href="/">Home</a></li>
+            <li class="active">Blog</li>
+        </ul>
+    </div>
+</section>
+
+<div class="sidebar-page-container">
+    <div class="auto-container">
+        <div class="row clearfix">
+
+            <div class="content-side col-lg-8 col-md-12 col-sm-12">
+                <div class="blog-posts">
+                    <div class="row clearfix">
+                        
+                        [universal_loop type="post"]
+                        <div class="news-block col-lg-6 col-md-6 col-sm-12">
+                            <div class="inner-box">
+                                <div class="image-box">
+                                    <figure class="image">
+                                        <a href="{link}"><img src="{image}" alt="{title}" style="height: 240px; object-fit: cover;"></a>
+                                    </figure>
+                                </div>
+                                <div class="lower-content">
+                                    <div class="date">{day} <span class="month">{month}</span></div>
+                                    <h3><a href="{link}">{title}</a></h3>
+                                    <div class="text">{text}</div>
+                                    <div class="post-meta">
+                                        <ul class="clearfix">
+                                            <li><a href="{link}"><span class="icon fa fa-user"></span> Admin</a></li>
+                                            <li><a href="{link}"><span class="icon fa fa-share-alt"></span> Read More</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        [/universal_loop]
+                        </div>
+                </div>
+                
+                <div class="pagination-box">
+                    <ul class="styled-pagination text-center">
+                        <li><a href="#" class="active">1</a></li>
+                        <li><a href="#">2</a></li>
+                        <li><a href="#"><span class="fa fa-angle-right"></span></a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="sidebar-side col-lg-4 col-md-12 col-sm-12">
+                <aside class="sidebar">
+                    
+                    <div class="sidebar-widget search-box">
+                        <h3 class="sidebar-title">Search</h3>
+                        <form method="get" action="/">
+                            <div class="form-group">
+                                <input type="search" name="s" value="" placeholder="Search..." required>
+                                <button type="submit"><span class="icon flaticon-search-1"></span></button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="sidebar-widget categories">
+                        <h3 class="sidebar-title">Programs</h3>
+                        <div class="widget-content">
+                            <ul>
+                                <li><a href="/education">Education</a></li>
+                                <li><a href="/empowerment">Empowerment</a></li>
+                                <li><a href="/elderly-care">Elderly Care</a></li>
+                                <li><a href="/environment">Environment</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="sidebar-widget popular-posts">
+                        <h3 class="sidebar-title">Latest News</h3>
+                        <div class="widget-content">
+                            [universal_loop type="post" count="3"]
+                            <div class="news-post">
+                                <div class="post-thumb">
+                                    <a href="{link}"><img src="{image}" alt="{title}"></a>
+                                </div>
+                                <div class="date"><span class="fa fa-calendar-alt"></span> {day} {month}</div>
+                                <h4><a href="{link}">{title}</a></h4>
+                            </div>
+                            [/universal_loop]
+                        </div>
+                    </div>
+
+                </aside>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<section class="call-to-action-two">
+    <div class="auto-container">
+        <div class="inner clearfix">
+            <div class="title-box"><h2>Become A Volunteer</h2></div>
+            <div class="link-box"><a href="/contact" class="theme-btn btn-style-five"><span class="btn-title">Get Involved</span></a></div>
+        </div>
+    </div>
+</section>

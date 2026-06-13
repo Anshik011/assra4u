@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/responsive.css" rel="stylesheet">
+    <link href="css/color.css" rel="stylesheet">
+    <link rel="shortcut icon" href="images/favicon.png" type="image/x-icon">
+    <link rel="icon" href="images/favicon.png" type="image/x-icon">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="page-wrapper">
+    <div class="preloader"><div class="icon"></div></div>
+    <header class="main-header header-style-three">
+
+        <!-- HEADER UPPER -->
+        <div class="header-upper">
+            <div class="auto-container">
+                <div class="inner-container clearfix">
+                    <div class="logo-box">
+                        <div class="logo">
+                            <a href="/"><img src="images/logo-2.png" alt="ASSRA Logo"></a>
+                        </div>
+                    </div>
+                    <div class="nav-outer clearfix">
+                        <div class="mobile-nav-toggler">
+                            <span class="icon flaticon-menu-1"></span>
+                        </div>
+                        <!-- MAIN MENU -->
+                        <nav class="main-menu navbar-expand-md navbar-light">
+                            <div class="collapse navbar-collapse clearfix" id="navbarSupportedContent">
+                                <?php
+                                wp_nav_menu(array(
+                                    'theme_location' => 'main-menu',
+                                    'container'      => false,
+                                    'menu_class'     => 'navigation clearfix',
+                                    'walker'         => new ASSRA_Menu_Walker(),
+                                ));
+                                ?>
+                            </div>
+                        </nav>
+                        <!-- DONATE BUTTON -->
+                        <div class="link-box clearfix" style="margin-left: 25px; padding: 18px 0;">
+                            <a href="/donate" class="theme-btn btn-style-one"><span class="btn-title">Donate</span></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STICKY HEADER -->
+        <div class="sticky-header">
+            <div class="auto-container clearfix">
+                <div class="logo pull-left">
+                    <a href="/"><img src="images/sticky-logo.png" alt="ASSRA Logo"></a>
+                </div>
+                <div class="pull-right" style="display:flex; align-items:center; gap:20px;">
+                    <!-- Nav cloned here by script.js -->
+                    <nav class="main-menu clearfix"></nav>
+                    <!-- DONATE BUTTON -->
+                    <div class="link-box">
+                        <a href="/donate" class="theme-btn btn-style-one"><span class="btn-title">Donate</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE MENU — donate button added at bottom of panel -->
+        <div class="mobile-menu">
+            <div class="menu-backdrop"></div>
+            <div class="close-btn"><span class="icon flaticon-cancel"></span></div>
+            <nav class="menu-box">
+                <div class="nav-logo">
+                    <a href="/"><img src="images/logo-2.png" alt="ASSRA Logo"></a>
+                </div>
+                <!-- Nav links filled by script.js -->
+                <div class="menu-outer"></div>
+                <!-- DONATE BUTTON — mobile menu panel -->
+                <div style="padding:20px 25px; border-top:1px solid rgba(255,255,255,0.1); margin-top:10px;">
+                    <a href="/donate" class="theme-btn btn-style-five" style="display:block; text-align:center; width:100%;">
+                        <span class="btn-title">Donate Now</span>
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+    </header>
+
+    <!-- SEARCH -->
+    <div id="search-popup" class="search-popup">
+        <div class="close-search theme-btn"><span class="flaticon-cancel"></span></div>
+        <div class="popup-inner">
+            <div class="overlay-layer"></div>
+            <div class="search-form">
+                <form method="get" action="/">
+                    <input type="search" name="s" placeholder="Search Here">
+                </form>
+            </div>
+        </div>
+    </div>

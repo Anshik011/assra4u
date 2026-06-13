@@ -1,0 +1,55 @@
+/*
+Theme Name: Assra Ngo Final Website
+Theme URI: https://richagrifarmer.in/
+Author: the Uptoware team
+Author URI: https://wordpress.org/
+Description: Assra Ngo Website  
+Version: 1.0
+Requires at least: 5.0
+Tested up to: 5.4
+Requires PHP: 7.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: Assra Ngo Website 
+This theme, like WordPress, is licensed under the GPL.
+*/
+/* FIX: REMOVE HORIZONTAL SCROLLBAR */
+/* ADD THIS TO THE VERY BOTTOM OF STYLE.CSS */
+
+/* --- CRITICAL FIX FOR HORIZONTAL SCROLLBAR --- */
+
+html, body {
+    width: 100%;
+    overflow-x: hidden !important; /* Forces browser to cut off side-scroll */
+    margin: 0;
+    padding: 0;
+}
+
+/* Ensure the wrapper strictly contains the layout */
+.page-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden !important; /* Hides the 'Ghost' animations sitting off-screen */
+    display: block;
+}
+
+/* Fix for Bootstrap Rows sticking out */
+.row {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+/* ==================================================
+   FIX: FORCE ICONS TO CENTER IN GREEN CIRCLES
+================================================== */
+.service-block .inner-box .icon-box {
+    display: flex !important;            /* Turn on Flexbox */
+    align-items: center !important;      /* Force Vertical Center */
+    justify-content: center !important;  /* Force Horizontal Center */
+    padding-top: 0 !important;           /* Remove any default padding */
+}
+
+/* Optional: Slight adjustment for specific icons if they still look off */
+.service-block .inner-box .icon-box i {
+    margin-top: 0 !important;
+    line-height: 0 !important;
+}
