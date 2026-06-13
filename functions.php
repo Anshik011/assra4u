@@ -71,7 +71,12 @@ add_action('init', function () {
         'labels' => ['name' => 'Top Donors', 'singular_name' => 'Donor'], 'public' => true, 'menu_icon' => 'dashicons-heart', 'supports' => ['title', 'thumbnail'],
     ]);
     register_post_type('voice', [
-        'labels' => ['name' => 'Community Voices', 'singular_name' => 'Voice'], 'public' => true, 'menu_icon' => 'dashicons-testimonial', 'supports' => ['title', 'editor', 'custom-fields'],
+        'labels' => ['name' => 'Community Voices', 'singular_name' => 'Voice'], 'public' => true, 
+'menu_icon' => 'dashicons-testimonial', 'supports' => ['title', 'editor', 'custom-fields'],
+    ]);
+    register_post_type('award', [
+        'labels' => ['name' => 'Awards', 'singular_name' => 'Award'], 'public' => true, 
+'menu_icon' => 'dashicons-awards', 'supports' => ['title', 'editor', 'custom-fields'],
     ]);
 });
 
@@ -102,6 +107,23 @@ add_action('save_post', function($post_id) {
     }
 });
 
+// Add Custom Meta Box for Awards
+add_action('add_meta_boxes', function() {
+    add_meta_box('award_details_meta', 'Award Details', function($post) {
+        $award_year = get_post_meta($post->ID, 'award_year', true);
+        wp_nonce_field('award_details_nonce', 'award_details_nonce_field');
+        echo '<p><label for="award_year">Award Year</label><br><input type="text" id="award_year" name="award_year" value="'.esc_attr($award_year).'" style="width:100%;"></p>';
+    }, 'award', 'normal', 'high');
+});
+
+add_action('save_post', function($post_id) {
+    if (!isset($_POST['award_details_nonce_field']) || !wp_verify_nonce($_POST['award_details_nonce_field'], 'award_details_nonce')) return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (isset($_POST['award_year'])) {
+        update_post_meta($post_id, 'award_year', sanitize_text_field($_POST['award_year']));
+    }
+});
+
 /* ==============================
    3. ASSET LOADER
    CSS ONLY — scripts are in _footer.html
@@ -124,6 +146,12 @@ add_action('wp_enqueue_scripts', function () {
 // [S11] Inject AJAX config into every page <head>
 // Uses wp_head which is buffered by utw_load_static_page() — works in .html files
 add_action('wp_head', function () {
+    // Preload LCP image for the home page to improve PageSpeed score
+    global $post;
+    if (is_front_page() || is_home() || (isset($post) && $post->post_name === 'home')) {
+        echo '<link rel="preload" as="image" href="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/main-slider/7.jpg') . '">' . "\n";
+    }
+
     echo '<script>var assra_ajax = {'
        . '"ajax_url":"'       . esc_js(admin_url('admin-ajax.php'))             . '",'
        . '"donation_nonce":"' . esc_js(wp_create_nonce('assra_donation_nonce')) . '",'
@@ -383,12 +411,13 @@ function utw_universal_loop_handler($atts, $content = null) {
         $img = get_the_post_thumbnail_url($id, $atts['image_size']) ?: get_stylesheet_directory_uri() . '/assets/images/resource/news-1.jpg';
         $subtitle = get_post_meta($id, 'voice_subtitle', true);
         $location = get_post_meta($id, 'voice_location', true);
+        $award_year = get_post_meta($id, 'award_year', true) ?: get_the_date('Y');
         $subtitle_html = $subtitle ? '<div class="subtitle">'.esc_html($subtitle).'</div>' : '';
         $location_html = $location ? '<div class="location"><i class="fa fa-map-marker-alt"></i> '.esc_html($location).'</div>' : '';
         
         $output .= str_replace(
-            ['{title}','{link}','{text}','{image}','{day}','{month}','{year}','{item_subtitle_html}','{item_location_html}','{full_text}'],
-            [esc_html(get_the_title()),get_permalink(),get_the_excerpt(),esc_url($img).'" loading="lazy',get_the_date('d'),get_the_date('M'),$filter_year,$subtitle_html,$location_html,get_the_content()],
+            ['{title}','{link}','{text}','{image}','{day}','{month}','{year}','{item_subtitle_html}','{item_location_html}','{full_text}','{award_year}'],
+            [esc_html(get_the_title()),get_permalink(),get_the_excerpt(),esc_url($img).'" loading="lazy',get_the_date('d'),get_the_date('M'),$filter_year,$subtitle_html,$location_html,get_the_content(),esc_html($award_year)],
             $template_html
         );
     endwhile;

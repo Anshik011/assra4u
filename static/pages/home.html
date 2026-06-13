@@ -126,12 +126,12 @@
                 <div class="inner">
                     <div class="images clearfix">
                         <div class="image-block">
-                            <figure class="image-box wow fadeInUp" data-wow-delay="0ms"><img src="images/resource/featured-image-9.jpg" alt=""></figure>
-                            <figure class="image-box wow fadeInUp" data-wow-delay="600ms"><img src="images/resource/featured-image-10.jpg" alt=""></figure>
+                            <figure class="image-box wow fadeInUp" data-wow-delay="0ms"><img src="images/resource/featured-image-9.jpg" alt="" width="800" height="600" loading="lazy"></figure>
+                            <figure class="image-box wow fadeInUp" data-wow-delay="600ms"><img src="images/resource/featured-image-10.jpg" alt="" width="800" height="600" loading="lazy"></figure>
                         </div>
                         <div class="image-block">
-                            <figure class="image-box wow fadeInUp" data-wow-delay="300ms"><img src="images/resource/featured-image-11.jpg" alt=""></figure>
-                            <figure class="image-box wow fadeInUp" data-wow-delay="900ms"><img src="images/resource/featured-image-12.jpg" alt=""></figure>
+                            <figure class="image-box wow fadeInUp" data-wow-delay="300ms"><img src="images/resource/featured-image-11.jpg" alt="" width="800" height="600" loading="lazy"></figure>
+                            <figure class="image-box wow fadeInUp" data-wow-delay="900ms"><img src="images/resource/featured-image-12.jpg" alt="" width="800" height="600" loading="lazy"></figure>
                         </div>
                     </div>
                 </div>
@@ -251,7 +251,7 @@
                     <div class="inner-box">
                         <div class="image-box">
                             <a href="{link}">
-                                <img src="{image}" alt="{title}">
+                                <img src="{image}" alt="{title}" width="800" height="600">
                             </a>
                         </div>
                         <div class="lower-box">
@@ -284,7 +284,7 @@
                 <div class="inner-box">
                     <div class="image-box">
                         <figure class="image">
-                            <img src="images/resource/featured-image-6.jpg" alt="Send Donation">
+                            <img src="images/resource/featured-image-6.jpg" alt="Send Donation" width="800" height="600" loading="lazy">
                         </figure>
                     </div>
                     <div class="lower-content">
@@ -299,7 +299,7 @@
                 <div class="inner-box">
                     <div class="image-box">
                         <figure class="image">
-                            <img src="images/resource/featured-image-7.jpg" alt="Volunteer">
+                            <img src="images/resource/featured-image-7.jpg" alt="Volunteer" width="800" height="600" loading="lazy">
                         </figure>
                     </div>
                     <div class="lower-content">
@@ -314,7 +314,7 @@
                 <div class="inner-box">
                     <div class="image-box">
                         <figure class="image">
-                            <img src="images/resource/featured-image-8.jpg" alt="Partner With Us">
+                            <img src="images/resource/featured-image-8.jpg" alt="Partner With Us" width="800" height="600" loading="lazy">
                         </figure>
                     </div>
                     <div class="lower-content">
@@ -333,7 +333,7 @@
     <div class="outer-container clearfix">
         <div class="image-column">
             <div class="image-layer" style="background-image:url(images/resource/video-image-2.jpg);"></div>
-            <div class="image-box"><figure class="image"><img src="images/resource/video-image-2.jpg" alt=""></figure></div>
+            <div class="image-box"><figure class="image"><img src="images/resource/video-image-2.jpg" alt="" width="1200" height="600" loading="lazy"></figure></div>
             <a href="/documents" class="lightbox-image over-link"><span class="icon flaticon-play-button"></span></a>
         </div>
         <div class="text-column">
@@ -365,7 +365,7 @@
                         <div class="inner-box clearfix">
                             <div class="image-column">
                                 <div class="image-box">
-                                    <img src="{image}" alt="{title}" onerror="this.src='images/resource/featured-image-9.jpg'">
+                                    <img src="{image}" alt="{title}" onerror="this.src='images/resource/featured-image-9.jpg'" width="800" height="600">
                                 </div>
                             </div>
                             <div class="content-column">
@@ -373,11 +373,11 @@
                                     <h3>{title}</h3>
                                     {item_subtitle_html}
                                     {item_location_html}
-                                    <div class="text">
+                                    <div class="text expandable-text">
                                         {full_text}
                                     </div>
                                     <div class="link-box">
-                                        <a href="{link}" class="theme-btn btn-style-five"><span class="btn-title">Read more</span></a>
+                                        <a href="javascript:void(0);" class="theme-btn btn-style-five toggle-read-more" onclick="this.closest('.inner-content').querySelector('.expandable-text').classList.toggle('expanded'); this.querySelector('.btn-title').innerText = this.closest('.inner-content').querySelector('.expandable-text').classList.contains('expanded') ? 'Read less' : 'Read more';"><span class="btn-title">Read more</span></a>
                                     </div>
                                 </div>
                             </div>
@@ -406,7 +406,7 @@
                         <div class="col-md-4 col-sm-4 col-6">
                             <div class="patron-logo">
                                 <a href="{link}">
-                                    <img src="{image}" alt="{title}" onerror="this.src='images/clients/1.png'">
+                                    <img src="{image}" alt="{title}" onerror="this.src='images/clients/1.png'" width="400" height="200">
                                 </a>
                             </div>
                         </div>
@@ -421,30 +421,14 @@
                     <h2>Awards & Recognition</h2>
                 </div>
                 <div class="awards-list">
+                    [universal_loop type="award" count="4"]
                     <div class="award-item">
-                        <div class="award-year"><span>2024</span></div>
+                        <div class="award-year"><span>{award_year}</span></div>
                         <div class="award-text">
-                            <p><strong>SAT PAUL MITTAL NATIONAL AWARD (LUDHIANA),</strong><br>INSTITUTIONAL GOLD CATEGORY</p>
+                            <p><strong>{title}</strong><br>{full_text}</p>
                         </div>
                     </div>
-                    <div class="award-item">
-                        <div class="award-year"><span>2020</span></div>
-                        <div class="award-text">
-                            <p><strong>Special Jury Award</strong> by NITI Aayog to Dr. Praveen Nair for her work with street children</p>
-                        </div>
-                    </div>
-                    <div class="award-item">
-                        <div class="award-year"><span>2017</span></div>
-                        <div class="award-text">
-                            <p><strong>Jamnalal Bajaj Award</strong> for outstanding contribution in the field of development and welfare of women and children</p>
-                        </div>
-                    </div>
-                    <div class="award-item">
-                        <div class="award-year"><span>2014</span></div>
-                        <div class="award-text">
-                            <p><strong>International Spotlight Award</strong> from National Arts and Humanities Youth Program, White House, Washington, USA</p>
-                        </div>
-                    </div>
+                    [/universal_loop]
                 </div>
             </div>
         </div>
@@ -468,7 +452,7 @@
                     <div class="event-block">
                         <div class="inner-box clearfix">
                             <div class="image-column">
-                                <div class="image-box"><img src="{image}" alt="{title}"></div>
+                                <div class="image-box"><img src="{image}" alt="{title}" width="800" height="600"></div>
                                 <div class="bg-image-layer" style="background-image:url({image});"></div>
                                 <a href="{link}" class="over-link"></a>
                             </div>
@@ -506,7 +490,7 @@
                  [universal_loop type="post" count="1" image_size="large"]
                  <div class="inner-box wow fadeInLeft" data-wow-delay="0ms">
                     <div class="image-box">
-                        <figure class="image"><a href="{link}"><img src="{image}" alt="{title}"></a></figure>
+                        <figure class="image"><a href="{link}"><img src="{image}" alt="{title}" width="800" height="600"></a></figure>
                     </div>
                     <div class="lower-content">
                         <div class="post-meta">
@@ -526,7 +510,7 @@
                 <div class="inner-box wow fadeInRight" data-wow-delay="0ms">
                      [universal_loop type="post" count="3" offset="1" image_size="thumbnail"]
                      <div class="news-post">
-                        <div class="post-thumb"><a href="{link}"><img src="{image}" alt="{title}"></a></div>
+                        <div class="post-thumb"><a href="{link}"><img src="{image}" alt="{title}" width="150" height="150"></a></div>
                         <div class="date"><span class="fa fa-calendar-alt"></span> {day} {month}</div>
                         <h4><a href="{link}">{title}</a></h4>
                      </div>
