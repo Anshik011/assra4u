@@ -1,0 +1,45 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="l-leaf">
+      <!-- Inner leaf -->
+      <path d="M 50 90 C 45 85 38 84 38 84 C 38 84 42 88 50 90 Z" fill="#F5B041"/>
+      <!-- Outer leaf -->
+      <path d="M 50 90 C 45 95 38 96 38 96 C 38 96 42 92 50 90 Z" fill="#F5B041"/>
+    </g>
+    <g id="r-leaf">
+      <!-- Inner leaf -->
+      <path d="M 50 90 C 55 85 62 84 62 84 C 62 84 58 88 50 90 Z" fill="#F5B041"/>
+      <!-- Outer leaf -->
+      <path d="M 50 90 C 55 95 62 96 62 96 C 62 96 58 92 50 90 Z" fill="#F5B041"/>
+    </g>
+  </defs>
+
+  <g fill="#F5B041">
+    <!-- 3 Stars -->
+    <path d="M 50 15 L 51.5 19.5 L 56 19.5 L 52.5 22.5 L 53.5 27 L 50 24.5 L 46.5 27 L 47.5 22.5 L 44 19.5 L 48.5 19.5 Z" />
+    <path d="M 35 22 L 36.5 26.5 L 41 26.5 L 37.5 29.5 L 38.5 34 L 35 31.5 L 31.5 34 L 32.5 29.5 L 29 26.5 L 33.5 26.5 Z" />
+    <path d="M 65 22 L 66.5 26.5 L 71 26.5 L 67.5 29.5 L 68.5 34 L 65 31.5 L 61.5 34 L 62.5 29.5 L 59 26.5 L 63.5 26.5 Z" />
+    
+    <!-- Left Branch Stem -->
+    <path d="M 50 90 A 35 35 0 0 1 25.3 30.3" fill="none" stroke="#F5B041" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Left Leaves -->
+    <use href="#l-leaf" transform="rotate(15 50 55)" />
+    <use href="#l-leaf" transform="rotate(35 50 55)" />
+    <use href="#l-leaf" transform="rotate(55 50 55)" />
+    <use href="#l-leaf" transform="rotate(75 50 55)" />
+    <use href="#l-leaf" transform="rotate(95 50 55)" />
+    <use href="#l-leaf" transform="rotate(115 50 55)" />
+    
+    <!-- Right Branch Stem -->
+    <path d="M 50 90 A 35 35 0 0 0 74.7 30.3" fill="none" stroke="#F5B041" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Right Leaves -->
+    <use href="#r-leaf" transform="rotate(-15 50 55)" />
+    <use href="#r-leaf" transform="rotate(-35 50 55)" />
+    <use href="#r-leaf" transform="rotate(-55 50 55)" />
+    <use href="#r-leaf" transform="rotate(-75 50 55)" />
+    <use href="#r-leaf" transform="rotate(-95 50 55)" />
+    <use href="#r-leaf" transform="rotate(-115 50 55)" />
+  </g>
+</svg>
