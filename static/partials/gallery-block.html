@@ -1,12 +1,79 @@
-<div class="gallery-item-two col-lg-4 col-md-6 col-sm-12">
-    <div class="image-box">
-        <figure class="image">
-            <img src="{image}" alt="{title}" style="width:100%; height:280px; object-fit:cover;">
-        </figure>
-        <div class="overlay-box">
-            <a href="{image}" class="lightbox-image" data-fancybox="gallery" data-caption="{title}">
-                <span class="icon flaticon-cross-1"></span>
-            </a>
+<div class="gallery-item-two col-lg-4 col-md-6 col-sm-12" style="margin-bottom: 30px;">
+    <div class="gallery-card" style="background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column;">
+        <div class="image-box" style="position: relative; overflow: hidden; height: 240px; background: #eaeaea;">
+            <figure class="image" style="margin: 0; height: 100%;">
+                <img src="{image}" alt="{title}" style="width: 100%; height: 100%; object-fit: cover; transition: all 0.5s ease;">
+            </figure>
+            <div class="overlay-box" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(40,167,69,0.9); opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; z-index: 2;">
+                <a href="{image}" class="lightbox-image" data-fancybox="gallery" data-caption="{title}" style="width: 50px; height: 50px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #28a745; font-size: 20px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                    <span class="fa fa-search-plus"></span>
+                </a>
+            </div>
+        </div>
+        <div class="card-content" style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; border-top: 1px solid #f5f5f5;">
+            <div>
+                <!-- Badges Row -->
+                <div class="badges-row" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <span class="badge badge-pillar badge-{program_slug}" style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px;">
+                        {program_name}
+                    </span>
+                    <span class="badge badge-year" style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: #e2e8f0; color: #4a5568; letter-spacing: 0.5px;">
+                        {gallery_year}
+                    </span>
+                </div>
+                
+                <!-- Title (SEO-friendly) -->
+                <h3 class="gallery-card-title" style="font-size: 18px; font-weight: 700; color: #1a365d; margin-bottom: 10px; line-height: 1.4em;">
+                    {title}
+                </h3>
+                
+                <!-- Description Excerpt (SEO and Data) -->
+                <p class="gallery-card-text" style="font-size: 14px; color: #718096; line-height: 1.6em; margin-bottom: 0;">
+                    {text}
+                </p>
+            </div>
+            
+            <div style="margin-top: 15px; border-top: 1px solid #f5f5f5; padding-top: 15px;">
+                <a href="{image}" class="lightbox-image text-link" data-fancybox="gallery" data-caption="{title}" style="font-size: 14px; font-weight: 700; color: #28a745; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                    View Photo <span class="fa fa-arrow-right" style="font-size: 12px;"></span>
+                </a>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .gallery-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        border-color: #e2e8f0;
+    }
+    .gallery-card:hover img {
+        transform: scale(1.05);
+    }
+    .gallery-card:hover .overlay-box {
+        opacity: 1;
+    }
+    
+    /* Pillar specific badge colors */
+    .badge-education {
+        background: #ebf8ff;
+        color: #2b6cb0;
+    }
+    .badge-elderly-care {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    .badge-empowerment {
+        background: #fce8e6;
+        color: #c53030;
+    }
+    .badge-environment {
+        background: #e6fffa;
+        color: #008080;
+    }
+    .badge-general {
+        background: #edf2f7;
+        color: #4a5568;
+    }
+</style>

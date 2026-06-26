@@ -43,14 +43,11 @@ add_action('after_setup_theme', function () {
    2. DATA STRUCTURE
 ==============================*/
 add_action('init', function () {
-    register_taxonomy('assra_program', ['post', 'event', 'gallery'], [
+    register_taxonomy('assra_program', ['post', 'gallery', 'voice'], [
         'label' => 'Programs (Pillars)', 'hierarchical' => true, 'show_admin_column' => true, 'show_in_rest' => true, 'rewrite' => ['slug' => 'program-filter'],
     ]);
     register_post_type('gallery', [
         'labels' => ['name' => 'Gallery', 'singular_name' => 'Photo Album'], 'public' => true, 'menu_icon' => 'dashicons-format-gallery', 'supports' => ['title', 'editor', 'thumbnail', 'excerpt'], 'has_archive' => true, 'taxonomies' => ['assra_program'],
-    ]);
-    register_post_type('event', [
-        'labels' => ['name' => 'Events', 'singular_name' => 'Event'], 'public' => true, 'menu_icon' => 'dashicons-calendar-alt', 'supports' => ['title', 'editor', 'thumbnail', 'custom-fields'], 'has_archive' => true, 'taxonomies' => ['assra_program'],
     ]);
     register_taxonomy('doc_type', ['document'], [
         'label' => 'Document Types', 'hierarchical' => true, 'show_admin_column' => true, 'rewrite' => ['slug' => 'doc-type'],
@@ -60,6 +57,9 @@ add_action('init', function () {
     ]);
     register_post_type('assra_inquiry', [
         'labels' => ['name' => 'Web Inquiries', 'singular_name' => 'Inquiry'], 'public' => false, 'show_ui' => true, 'menu_icon' => 'dashicons-email', 'supports' => ['title', 'editor', 'custom-fields'], 'capabilities' => ['create_posts' => false],
+    ]);
+    register_post_type('assra_volunteer', [
+        'labels' => ['name' => 'Volunteer Apps', 'singular_name' => 'Volunteer App'], 'public' => false, 'show_ui' => true, 'menu_icon' => 'dashicons-groups', 'supports' => ['title', 'editor', 'custom-fields'], 'capabilities' => ['create_posts' => false],
     ]);
     register_post_type('board_member', [
         'labels' => ['name' => 'Board Members', 'singular_name' => 'Member'], 'public' => true, 'menu_icon' => 'dashicons-businessperson', 'supports' => ['title', 'thumbnail', 'excerpt'],
@@ -155,7 +155,8 @@ add_action('wp_head', function () {
     echo '<script>var assra_ajax = {'
        . '"ajax_url":"'       . esc_js(admin_url('admin-ajax.php'))             . '",'
        . '"donation_nonce":"' . esc_js(wp_create_nonce('assra_donation_nonce')) . '",'
-       . '"contact_nonce":"'  . esc_js(wp_create_nonce('assra_contact_nonce'))  . '"'
+       . '"contact_nonce":"'  . esc_js(wp_create_nonce('assra_contact_nonce'))  . '",'
+       . '"volunteer_nonce":"' . esc_js(wp_create_nonce('assra_volunteer_nonce')) . '"'
        . '};</script>' . "\n";
 }, 1);
 
@@ -204,12 +205,61 @@ function assra_handle_form_submit() {
     exit;
 }
 
+function assra_handle_volunteer_submit() {
+    $token = $_POST['assra_volunteer_token'] ?? '';
+    if (empty($token) || !wp_verify_nonce($token, 'assra_volunteer_nonce')) {
+        wp_die('Security check failed. Please go back and try again.');
+    }
+    if (!isset($_POST['submit-form'])) return;
+
+    $ip_key = 'assra_volunteer_limit_' . md5($_SERVER['REMOTE_ADDR']);
+    if (get_transient($ip_key)) {
+        wp_die('You are submitting too quickly. Please wait a moment and try again.');
+    }
+    set_transient($ip_key, 1, 60);
+
+    $name     = sanitize_text_field($_POST['name'] ?? '');
+    $email    = sanitize_email($_POST['email'] ?? '');
+    $phone    = sanitize_text_field($_POST['phone'] ?? '');
+    $interest = sanitize_text_field(implode(', ', (array)($_POST['interest'] ?? [])));
+    $message  = sanitize_textarea_field($_POST['message'] ?? '');
+
+    if (empty($name) || empty($email) || !is_email($email)) {
+        wp_die('Invalid form data. Please fill in all required fields.');
+    }
+
+    wp_insert_post([
+        'post_title'   => 'Volunteer App: ' . $name,
+        'post_content' => "<strong>Name:</strong> " . esc_html($name) . "\n"
+                        . "<strong>Email:</strong> " . esc_html($email) . "\n"
+                        . "<strong>Phone:</strong> " . esc_html($phone) . "\n"
+                        . "<strong>Interest:</strong> " . esc_html($interest) . "\n\n"
+                        . "<strong>Cover Message:</strong>\n" . esc_html($message),
+        'post_type'    => 'assra_volunteer',
+        'post_status'  => 'publish',
+    ]);
+
+    wp_redirect(home_url('/volunteer/?success=1'));
+    exit;
+}
+add_action('admin_post_assra_volunteer_form', 'assra_handle_volunteer_submit');
+add_action('admin_post_nopriv_assra_volunteer_form', 'assra_handle_volunteer_submit');
+
 /* ==========================================================================
    5. STATIC PAGE ENGINE
    [S6] REQUEST_URI sanitized
    [S7] wp_head() / wp_footer() properly buffered
 ========================================================================== */
 function utw_load_static_page($slug) {
+    // Send Security Headers & Cache-Control for performance
+    if (!headers_sent()) {
+        header("X-Frame-Options: SAMEORIGIN");
+        header("X-Content-Type-Options: nosniff");
+        header("X-XSS-Protection: 1; mode=block");
+        header("Referrer-Policy: no-referrer-when-downgrade");
+        header("Cache-Control: public, max-age=3600");
+    }
+
     $theme_dir = get_stylesheet_directory();
     $theme_uri = get_stylesheet_directory_uri();
 
@@ -231,7 +281,59 @@ function utw_load_static_page($slug) {
     $seo_desc  = "ASSRA is a non-profit NGO working for Education, Empowerment, Elderly Care, and Environmental initiatives.";
     $seo_img   = $theme_uri . '/assets/images/background/bg-banner-1.jpg';
 
-    if (is_singular()) {
+    if ($slug === 'education-work') {
+        $seo_title = "Education NGO in India | Charity Supporting Children Education - ASSRA";
+        $seo_desc  = "ASSRA is a leading non-profit NGO dedicated to providing quality education, nutrition, and support to underprivileged children in India. Join us in transforming lives.";
+        $seo_img   = $theme_uri . '/assets/images/resource/cause-image-1.jpg';
+    } elseif ($slug === 'elderly-care') {
+        $seo_title = "Elderly Care NGO in India | Supporting Destitute Senior Citizens - ASSRA";
+        $seo_desc  = "ASSRA provides shelter, nutrition, healthcare, and rehabilitation for abandoned and destitute senior citizens, ensuring they live with safety and comfort.";
+        $seo_img   = $theme_uri . '/assets/images/main-slider/7.jpg';
+    } elseif ($slug === 'empowerment') {
+        $seo_title = "Livelihood & Women Empowerment NGO | Skill Development - ASSRA";
+        $seo_desc  = "ASSRA strengthens women and marginalized communities through vocational training, tailoring workshops, and digital literacy for sustainable livelihood.";
+        $seo_img   = $theme_uri . '/assets/images/main-slider/9.jpg';
+    } elseif ($slug === 'environment') {
+        $seo_title = "Environmental Conservation & Green Initiatives NGO - ASSRA";
+        $seo_desc  = "ASSRA promotes environmental preservation, waste management, afforestation drives, and solar installations for a sustainable and green future.";
+        $seo_img   = $theme_uri . '/assets/images/main-slider/8.jpg';
+    } elseif ($slug === 'about-assra') {
+        $seo_title = "About ASSRA NGO | Grassroots Development & Social Service India";
+        $seo_desc  = "Learn about ASSRA's history, mission, vision, and core philosophy of transforming lives through sustainable grassroots social welfare initiatives.";
+    } elseif ($slug === 'donors') {
+        $seo_title = "Our Partners & Top Donors | Support ASSRA NGO";
+        $seo_desc  = "Meet the supporters, donors, and corporate partners who fund and fuel ASSRA's welfare programs for education, elderly care, and livelihood.";
+    } elseif ($slug === 'documents') {
+        $seo_title = "ASSRA Publications & Regulatory Documents";
+        $seo_desc  = "Access ASSRA's transparent compliance reports, societies registration certificate, 12A/80G status, and financial audit files.";
+    } elseif ($slug === 'gallery') {
+        $seo_title = "ASSRA Media Gallery | Grassroots Impact Photos & Videos";
+        $seo_desc  = "Explore visual highlights of ASSRA's community initiatives, shelter operations, tree planting drives, and basic education classes.";
+    } elseif ($slug === 'leadership') {
+        $seo_title = "ASSRA Leadership Team | Executive Board & Office Bearers";
+        $seo_desc  = "Meet the dedicated executive body, office bearers, and board members driving ASSRA's operations with transparency and accountability.";
+    } elseif ($slug === 'our-story') {
+        $seo_title = "Our Journey | From Relief to Sustainable Empowerment - ASSRA";
+        $seo_desc  = "Read the story of ASSRA's growth, from providing immediate relief to establishing long-term community development structures.";
+    } elseif ($slug === 'reach-presence') {
+        $seo_title = "Geographic Footprint & Reach - ASSRA NGO India";
+        $seo_desc  = "See where ASSRA operates across India, including tribal villages in Jharkhand and urban education clusters in Delhi.";
+    } elseif ($slug === 'vision-mission') {
+        $seo_title = "Vision, Mission & Core Values | The Ethical Compass of ASSRA";
+        $seo_desc  = "Read about ASSRA's guiding vision of dignity, transparency, inclusivity, and sustainability for all vulnerable communities.";
+    } elseif ($slug === 'contact') {
+        $seo_title = "Contact ASSRA NGO | Volunteer, Support, or Enquire";
+        $seo_desc  = "Get in touch with ASSRA NGO. Speak to our team about donations, corporate CSR sponsorships, or volunteering on the ground.";
+    } elseif ($slug === 'donate') {
+        $seo_title = "Donate to ASSRA NGO | Tax Exempt Social Contributions";
+        $seo_desc  = "Support underprivileged education, elderly shelters, and green initiatives with your tax-deductible contributions to ASSRA under 80G.";
+    } elseif ($slug === 'media-coverage') {
+        $seo_title = "ASSRA in the News | Media Coverage & Press Highlights";
+        $seo_desc  = "Read news reports and press coverage highlighting ASSRA's impact, shelter operations, and community service milestones.";
+    } elseif ($slug === 'volunteer') {
+        $seo_title = "Join Us as a Volunteer | Grassroots Action - ASSRA";
+        $seo_desc  = "Apply to volunteer with ASSRA NGO. Gain hands-on field experience in social service, education, environment, and elderly care.";
+    } elseif (is_singular()) {
         $id        = get_the_ID();
         $seo_title = get_the_title($id) . " | ASSRA";
         $seo_desc  = wp_trim_words(get_the_excerpt($id), 25);
@@ -322,9 +424,6 @@ add_action('template_redirect', function () {
         $slug = 'documents';
     } elseif (is_page()) {
         $slug = $post->post_name;
-        if (in_array($slug, ['education', 'empowerment', 'elderly-care', 'environment'])) {
-            $slug = 'programs';
-        }
     } elseif (is_post_type_archive('event')) {
         $slug = 'events';
     } elseif (is_post_type_archive('gallery')) {
@@ -371,12 +470,238 @@ add_shortcode('year_filter', function () {
     return ob_get_clean();
 });
 
+// New gallery_filter_bar shortcode for general gallery page
+add_shortcode('gallery_filter_bar', function () {
+    global $wpdb;
+
+    $current_program = isset($_GET['program']) ? sanitize_key($_GET['program']) : '';
+    $current_year = isset($_GET['gallery_year']) ? intval($_GET['gallery_year']) : 0;
+
+    $programs = get_terms([
+        'taxonomy' => 'assra_program',
+        'hide_empty' => false,
+    ]);
+
+    $years = $wpdb->get_col("
+        SELECT DISTINCT pm.meta_value 
+        FROM {$wpdb->postmeta} pm
+        INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+        WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
+        AND p.post_type = 'gallery' AND p.post_status = 'publish'
+        ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC
+    ");
+
+    ob_start();
+    ?>
+    <div class="gallery-filters-wrapper">
+        <form method="get" action="<?php echo esc_url(home_url('/gallery/')); ?>" class="gallery-filter-form">
+            <div class="filter-row">
+                <!-- Program Pillars -->
+                <div class="filter-group pillar-group">
+                    <label class="filter-label" for="gallery-program-select">Filter by Pillar</label>
+                    <div class="custom-select-wrapper">
+                        <select name="program" id="gallery-program-select" onchange="this.form.submit()">
+                            <option value="">All Pillars</option>
+                            <?php foreach ($programs as $prog) : ?>
+                                <option value="<?php echo esc_attr($prog->slug); ?>" <?php selected($current_program, $prog->slug); ?>>
+                                    <?php echo esc_html($prog->name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (!empty($current_year)) : ?>
+                            <input type="hidden" name="gallery_year" value="<?php echo esc_attr($current_year); ?>">
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Years Dropdown -->
+                <div class="filter-group year-group">
+                    <label class="filter-label" for="gallery-year-select">Filter by Year</label>
+                    <div class="custom-select-wrapper">
+                        <select name="gallery_year" id="gallery-year-select" onchange="this.form.submit()">
+                            <option value="">All Years</option>
+                            <?php foreach ($years as $year) : ?>
+                                <option value="<?php echo esc_attr($year); ?>" <?php selected($current_year, $year); ?>>
+                                    <?php echo esc_html($year); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (!empty($current_program)) : ?>
+                            <input type="hidden" name="program" value="<?php echo esc_attr($current_program); ?>">
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Reset Button -->
+                <?php if (!empty($current_program) || !empty($current_year)) : ?>
+                    <div class="filter-group reset-group">
+                        <a href="<?php echo esc_url(home_url('/gallery/')); ?>" class="reset-filter-btn">
+                            <span class="fa fa-times"></span> Clear Filters
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        .gallery-filters-wrapper {
+            background: #ffffff;
+            padding: 25px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+            border: 1px solid #f0f0f0;
+        }
+        .gallery-filter-form {
+            width: 100%;
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 25px;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-group.year-group {
+            min-width: 200px;
+        }
+        .filter-group.pillar-group {
+            min-width: 200px;
+        }
+        .filter-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a365d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0;
+        }
+        .pillar-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .pillar-buttons .filter-btn {
+            display: inline-block;
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            text-decoration: none !important;
+        }
+        .pillar-buttons .filter-btn:hover {
+            background: #edf2f7;
+            color: #28a745;
+            border-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+        .pillar-buttons .filter-btn.active {
+            background: #28a745;
+            color: #ffffff;
+            border-color: #28a745;
+            box-shadow: 0 4px 10px rgba(40,167,69,0.3);
+        }
+        .custom-select-wrapper {
+            position: relative;
+        }
+        .custom-select-wrapper select {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        .custom-select-wrapper select:focus, .custom-select-wrapper select:hover {
+            background: #ffffff;
+            border-color: #28a745;
+            box-shadow: 0 0 0 3px rgba(40,167,69,0.1);
+        }
+        .custom-select-wrapper::after {
+            content: "\f107";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #718096;
+            pointer-events: none;
+            font-size: 16px;
+        }
+        .reset-filter-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e53e3e;
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+            text-decoration: none !important;
+            transition: all 0.3s ease;
+            height: 42px;
+            margin-top: auto;
+        }
+        .reset-filter-btn:hover {
+            background: #e53e3e;
+            color: #ffffff;
+            border-color: #e53e3e;
+            box-shadow: 0 4px 10px rgba(229,62,62,0.2);
+        }
+        @media (max-width: 768px) {
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-group.year-group, .filter-group.pillar-group {
+                min-width: 100%;
+            }
+            .reset-filter-btn {
+                justify-content: center;
+                width: 100%;
+            }
+        }
+    </style>
+    <?php
+    return ob_get_clean();
+});
+
 remove_shortcode('universal_loop');
 add_shortcode('universal_loop', 'utw_universal_loop_handler');
 
 function utw_universal_loop_handler($atts, $content = null) {
     global $wpdb, $post;
-    $atts = shortcode_atts(['type'=>'post','count'=>12,'taxonomy'=>'','term'=>'','pagination'=>'false','image_size'=>'large'], $atts);
+    $atts = shortcode_atts([
+        'type'       => 'post',
+        'count'      => 12,
+        'taxonomy'   => '',
+        'term'       => '',
+        'pagination' => 'false',
+        'image_size' => 'large',
+        'template'   => '',
+        'layout'     => '',
+    ], $atts);
+
     $current_pillar = $atts['term'];
     if (empty($atts['taxonomy']) && empty($atts['term']) && is_page()) {
         $s = $post->post_name;
@@ -384,43 +709,144 @@ function utw_universal_loop_handler($atts, $content = null) {
             $atts['taxonomy'] = 'assra_program'; $atts['term'] = $s; $current_pillar = $s;
         }
     }
+
+    if ($atts['type'] === 'gallery' && isset($_GET['program']) && !empty($_GET['program'])) {
+        $atts['taxonomy'] = 'assra_program';
+        $atts['term'] = sanitize_key($_GET['program']);
+        $current_pillar = $atts['term'];
+    }
+
+    if ($atts['type'] === 'document' && isset($_GET['doc_type']) && !empty($_GET['doc_type'])) {
+        $atts['taxonomy'] = 'doc_type';
+        $atts['term'] = sanitize_key($_GET['doc_type']);
+    }
+
     $filter_year = null;
     if ($atts['type'] === 'gallery') {
-        $latest = $wpdb->get_var($wpdb->prepare("
-            SELECT pm.meta_value FROM {$wpdb->postmeta} pm
-            INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-            INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-            INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-            INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
-            WHERE pm.meta_key = 'gallery_year' AND p.post_status = 'publish' AND t.slug = %s
-            ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC LIMIT 1
-        ", $current_pillar));
-        $filter_year = isset($_GET['gallery_year']) ? intval($_GET['gallery_year']) : ($latest ?: date('Y'));
+        if (isset($_GET['gallery_year']) && !empty($_GET['gallery_year'])) {
+            $filter_year = intval($_GET['gallery_year']);
+        } elseif (!empty($current_pillar)) {
+            $latest = $wpdb->get_var($wpdb->prepare("
+                SELECT pm.meta_value FROM {$wpdb->postmeta} pm
+                INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+                INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+                WHERE pm.meta_key = 'gallery_year' AND p.post_status = 'publish' AND t.slug = %s
+                ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC LIMIT 1
+            ", $current_pillar));
+            if ($latest) {
+                $filter_year = intval($latest);
+            }
+        }
     }
+
     $orderby = 'date'; $order = 'DESC';
     if (in_array($atts['type'], ['board_member','board','partner'])) { $orderby = 'menu_order'; $order = 'ASC'; }
-    $args = ['post_type'=>$atts['type'],'posts_per_page'=>$atts['count'],'post_status'=>'publish','paged'=>(get_query_var('paged'))?:1,'orderby'=>$orderby,'order'=>$order];
-    if (!empty($atts['taxonomy']) && !empty($atts['term'])) $args['tax_query'] = [['taxonomy'=>$atts['taxonomy'],'field'=>'slug','terms'=>$atts['term']]];
-    if ($atts['type']==='gallery' && $filter_year) { $args['meta_key']='gallery_year'; $args['meta_value']=$filter_year; }
+    
+    $paged = (get_query_var('paged')) ? get_query_var('paged') : ( (isset($_GET['paged'])) ? intval($_GET['paged']) : 1 );
+    $args = [
+        'post_type'      => $atts['type'],
+        'posts_per_page' => $atts['count'],
+        'post_status'    => 'publish',
+        'paged'          => $paged,
+        'orderby'        => $orderby,
+        'order'          => $order
+    ];
+
+    if (!empty($atts['taxonomy']) && !empty($atts['term'])) {
+        $args['tax_query'] = [[
+            'taxonomy' => $atts['taxonomy'],
+            'field'    => 'slug',
+            'terms'    => $atts['term']
+        ]];
+    }
+
+    if ($atts['type'] === 'gallery' && $filter_year) {
+        $args['meta_key'] = 'gallery_year';
+        $args['meta_value'] = $filter_year;
+    }
+
     $query = new WP_Query($args);
-    if (!$query->have_posts()) return '<div class="no-data-placeholder col-12" style="text-align:center;padding:60px 20px;background:#fafafa;border:2px dashed #e0e0e0;border-radius:10px;margin-bottom:30px;width:100%;"><div style="font-size:45px;color:#28a745;margin-bottom:15px;"><i class="fas fa-folder-open"></i></div><h3 style="font-size:24px;color:#1a365d;margin-bottom:10px;">More Updates Coming Soon</h3><p style="color:#666;font-size:16px;max-width:500px;margin:0 auto;">We are currently organizing new content for this section. Please check back later.</p></div>';
-    $template_html = do_shortcode(shortcode_unautop($content));
+    if (!$query->have_posts()) {
+        return '<div class="no-data-placeholder col-12" style="text-align:center;padding:60px 20px;background:#fafafa;border:2px dashed #e0e0e0;border-radius:10px;margin-bottom:30px;width:100%;"><div style="font-size:45px;color:#28a745;margin-bottom:15px;"><i class="fas fa-folder-open"></i></div><h3 style="font-size:24px;color:#1a365d;margin-bottom:10px;">More Updates Coming Soon</h3><p style="color:#666;font-size:16px;max-width:500px;margin:0 auto;">We are currently organizing new content for this section. Please check back later.</p></div>';
+    }
+
+    $template_html = '';
+    if (!empty($content)) {
+        $template_html = do_shortcode(shortcode_unautop($content));
+    } elseif (!empty($atts['template'])) {
+        $template_file = get_stylesheet_directory() . '/static/partials/' . sanitize_file_name($atts['template']);
+        if (file_exists($template_file)) {
+            $template_html = file_get_contents($template_file);
+        }
+    } elseif ($atts['type'] === 'document' && $atts['layout'] === 'table') {
+        $template_html = '
+        <tr>
+            <td style="padding: 20px; font-size: 16px; border-bottom: 1px solid #eee; font-weight: 500; text-align: left;">
+                <span class="far fa-file-pdf" style="color: #e53e3e; margin-right: 10px;"></span> {title}
+            </td>
+            <td style="padding: 20px; font-size: 16px; border-bottom: 1px solid #eee; color: #666; text-align: left;">
+                {day} {month} {year}
+            </td>
+            <td style="padding: 20px; font-size: 16px; border-bottom: 1px solid #eee; text-align: right;">
+                <a href="{document_file}" class="theme-btn btn-style-one" style="padding: 6px 15px; font-size: 14px;" target="_blank">
+                    <span class="btn-title">View / Download</span>
+                </a>
+            </td>
+        </tr>';
+    }
+
+    if (empty($template_html)) {
+        return '';
+    }
+
     $output = '';
     while ($query->have_posts()) : $query->the_post();
         $id  = get_the_ID();
-        $img = get_the_post_thumbnail_url($id, $atts['image_size']) ?: get_stylesheet_directory_uri() . '/assets/images/resource/news-1.jpg';
+        $fallback_img = get_stylesheet_directory_uri() . '/assets/images/resource/news-1.jpg';
+        if ($atts['type'] === 'partner') {
+            $fallback_img = get_stylesheet_directory_uri() . '/assets/images/resource/default-donor.png';
+        }
+        $img = get_the_post_thumbnail_url($id, $atts['image_size']) ?: $fallback_img;
         $subtitle = get_post_meta($id, 'voice_subtitle', true);
         $location = get_post_meta($id, 'voice_location', true);
         $award_year = get_post_meta($id, 'award_year', true) ?: get_the_date('Y');
         $subtitle_html = $subtitle ? '<div class="subtitle">'.esc_html($subtitle).'</div>' : '';
         $location_html = $location ? '<div class="location"><i class="fa fa-map-marker-alt"></i> '.esc_html($location).'</div>' : '';
         
+        $terms = get_the_terms($id, 'assra_program');
+        $program_name = (!empty($terms) && !is_wp_error($terms)) ? $terms[0]->name : 'General';
+        $program_slug = (!empty($terms) && !is_wp_error($terms)) ? $terms[0]->slug : 'general';
+        $item_year = get_post_meta($id, 'gallery_year', true) ?: get_the_date('Y');
+
+        $doc_file = get_post_meta($id, 'document_file', true) ?: '#';
         $output .= str_replace(
-            ['{title}','{link}','{text}','{image}','{day}','{month}','{year}','{item_subtitle_html}','{item_location_html}','{full_text}','{award_year}'],
-            [esc_html(get_the_title()),get_permalink(),get_the_excerpt(),esc_url($img).'" loading="lazy',get_the_date('d'),get_the_date('M'),$filter_year,$subtitle_html,$location_html,get_the_content(),esc_html($award_year)],
+            ['{title}','{link}','{text}','{image}','{day}','{month}','{year}','{item_subtitle_html}','{item_location_html}','{full_text}','{award_year}','{program_name}','{program_slug}','{gallery_year}','{document_file}','{post_id}','{subtitle}','{location}'],
+            [esc_html(get_the_title()),get_permalink(),get_the_excerpt(),esc_url($img).'" loading="lazy',get_the_date('d'),get_the_date('M'),$item_year,$subtitle_html,$location_html,get_the_content(),esc_html($award_year),esc_html($program_name),esc_attr($program_slug),esc_html($item_year),esc_url($doc_file),intval($id),esc_html($subtitle),esc_html($location)],
             $template_html
         );
     endwhile;
+
+    if ($atts['pagination'] === 'true' && $query->max_num_pages > 1) {
+        $big = 999999999;
+        $pagination_html = paginate_links([
+            'base'      => str_replace($big, '%#%', esc_url(get_pagenum_link($big))),
+            'format'    => '?paged=%#%',
+            'current'   => max(1, $paged),
+            'total'     => $query->max_num_pages,
+            'prev_text' => '<span class="fa fa-angle-left"></span>',
+            'next_text' => '<span class="fa fa-angle-right"></span>',
+            'type'      => 'list'
+        ]);
+        if ($pagination_html) {
+            $pagination_html = str_replace("<ul class='page-numbers'>", '<ul class="styled-pagination text-center">', $pagination_html);
+            $pagination_html = str_replace('page-numbers current', 'active', $pagination_html);
+            $pagination_html = str_replace('page-numbers', '', $pagination_html);
+            $output .= '<div class="pagination-box col-12 text-center" style="width:100%; margin-top:30px;">' . $pagination_html . '</div>';
+        }
+    }
+
     wp_reset_postdata();
     return $output;
 }
@@ -536,7 +962,7 @@ add_action('admin_notices', function () {
 });
 
 /* ==============================
-   11. MENU WALKER
+   11. MENU WALKER & DYNAMIC SUBMENUS
 ==============================*/
 class ASSRA_Menu_Walker extends Walker_Nav_Menu {
     public function start_lvl(&$output, $depth = 0, $args = null) { $output .= '<ul>'; }
@@ -549,3 +975,280 @@ class ASSRA_Menu_Walker extends Walker_Nav_Menu {
         if ($has_children) $output .= '<div class="dropdown-btn"><span class="fa fa-angle-down"></span></div>';
     }
 }
+
+// Dynamically inject the "Our Work" parent dropdown and its submenus, and keep the "Gallery" submenus intact
+add_filter('wp_nav_menu_objects', function ($sorted_menu_items, $args) {
+    if ($args->theme_location !== 'main-menu') {
+        return $sorted_menu_items;
+    }
+
+    $new_sorted = [];
+    $our_work_inserted = false;
+    $gallery_inserted = false;
+    $documents_inserted = false;
+
+    global $wp;
+    $current_slug = basename(sanitize_file_name($wp->request));
+
+    $pillars = [
+        'education-work' => 'Education',
+        'elderly-care'   => 'Elderly Care',
+        'empowerment'    => 'Empowerment',
+        'environment'    => 'Environment'
+    ];
+
+    foreach ($sorted_menu_items as $item) {
+        $new_sorted[] = $item;
+
+        // 1. Dynamic Gallery dropdown with program categories
+        if (!$gallery_inserted && (strpos(strtolower($item->url), '/gallery') !== false || strtolower($item->title) === 'gallery')) {
+            $item->classes[] = 'menu-item-has-children';
+            $item->classes[] = 'dropdown';
+
+            $terms = get_terms([
+                'taxonomy'   => 'assra_program',
+                'hide_empty' => false,
+            ]);
+
+            if (!is_wp_error($terms) && !empty($terms)) {
+                $sub_idx = 1;
+                foreach ($terms as $term) {
+                    $term_id = 999800 + $sub_idx;
+                    $sub_item = new stdClass();
+                    $sub_item->ID = $term_id;
+                    $sub_item->db_id = $term_id;
+                    $sub_item->title = $term->name;
+                    $sub_item->url = home_url('/gallery/?program=' . $term->slug);
+                    $sub_item->menu_item_parent = $item->ID;
+                    $sub_item->object_id = $term_id;
+                    $sub_item->object = 'custom';
+                    $sub_item->type = 'custom';
+                    $sub_item->type_label = 'Custom Link';
+                    $sub_item->classes = ['menu-item', 'menu-item-type-custom', 'menu-item-object-custom'];
+                    $sub_item->target = '';
+                    $sub_item->attr_title = '';
+                    $sub_item->description = '';
+                    $sub_item->xfn = '';
+                    $sub_item->current = false;
+                    $sub_item->current_item_parent = false;
+                    $sub_item->current_item_ancestor = false;
+
+                    $active = false;
+                    $current_program = isset($_GET['program']) ? sanitize_key($_GET['program']) : '';
+
+                    if (is_post_type_archive('gallery') || $current_slug === 'gallery') {
+                        if ($current_program === $term->slug) {
+                            $active = true;
+                        }
+                    } elseif (is_singular('gallery')) {
+                        $post_terms = get_the_terms(get_the_ID(), 'assra_program');
+                        if (!is_wp_error($post_terms) && !empty($post_terms)) {
+                            if ($post_terms[0]->slug === $term->slug) {
+                                $active = true;
+                            }
+                        }
+                    }
+
+                    if ($active) {
+                        $sub_item->classes[] = 'current-menu-item';
+                        $sub_item->current = true;
+                        if (!in_array('current-menu-ancestor', $item->classes)) {
+                            $item->classes[] = 'current-menu-ancestor';
+                        }
+                    }
+
+                    $new_sorted[] = $sub_item;
+                    $sub_idx++;
+                }
+            }
+            $gallery_inserted = true;
+        }
+
+        // 3. Dynamic Documents dropdown with doc_type categories
+        if (!$documents_inserted && (strpos(strtolower($item->url), '/documents') !== false || strtolower($item->title) === 'documents')) {
+            $item->classes[] = 'menu-item-has-children';
+            $item->classes[] = 'dropdown';
+
+            $terms = get_terms([
+                'taxonomy'   => 'doc_type',
+                'hide_empty' => false,
+            ]);
+
+            if (!is_wp_error($terms) && !empty($terms)) {
+                $sub_idx = 1;
+                foreach ($terms as $term) {
+                    $term_id = 999700 + $sub_idx;
+                    $sub_item = new stdClass();
+                    $sub_item->ID = $term_id;
+                    $sub_item->db_id = $term_id;
+                    $sub_item->title = $term->name;
+                    $sub_item->url = home_url('/documents/?doc_type=' . $term->slug);
+                    $sub_item->menu_item_parent = $item->ID;
+                    $sub_item->object_id = $term_id;
+                    $sub_item->object = 'custom';
+                    $sub_item->type = 'custom';
+                    $sub_item->type_label = 'Custom Link';
+                    $sub_item->classes = ['menu-item', 'menu-item-type-custom', 'menu-item-object-custom'];
+                    $sub_item->target = '';
+                    $sub_item->attr_title = '';
+                    $sub_item->description = '';
+                    $sub_item->xfn = '';
+                    $sub_item->current = false;
+                    $sub_item->current_item_parent = false;
+                    $sub_item->current_item_ancestor = false;
+
+                    $active = false;
+                    $current_doc_type = isset($_GET['doc_type']) ? sanitize_key($_GET['doc_type']) : '';
+
+                    if (is_page('documents') || $current_slug === 'documents' || is_tax('doc_type')) {
+                        if ($current_doc_type === $term->slug) {
+                            $active = true;
+                        }
+                    }
+
+                    if ($active) {
+                        $sub_item->classes[] = 'current-menu-item';
+                        $sub_item->current = true;
+                        if (!in_array('current-menu-ancestor', $item->classes)) {
+                            $item->classes[] = 'current-menu-ancestor';
+                        }
+                    }
+
+                    $new_sorted[] = $sub_item;
+                    $sub_idx++;
+                }
+            }
+            $documents_inserted = true;
+        }
+
+        // 2. Check for About Us or About ASSRA item to inject "Our Work" dropdown
+        if (!$our_work_inserted && (
+            strpos(strtolower($item->url), '/about-us') !== false ||
+            strpos(strtolower($item->url), '/about-assra') !== false ||
+            strtolower($item->title) === 'about us' ||
+            strtolower($item->title) === 'about assra'
+        )) {
+            // Create "Our Work" parent item as a dropdown
+            $parent_id = 999900;
+            $parent_item = new stdClass();
+            $parent_item->ID = $parent_id;
+            $parent_item->db_id = $parent_id;
+            $parent_item->title = 'Our Work';
+            $parent_item->url = '#';
+            $parent_item->menu_item_parent = 0;
+            $parent_item->object_id = $parent_id;
+            $parent_item->object = 'custom';
+            $parent_item->type = 'custom';
+            $parent_item->type_label = 'Custom Link';
+            $parent_item->classes = ['menu-item', 'menu-item-type-custom', 'menu-item-object-custom', 'menu-item-has-children', 'dropdown'];
+            $parent_item->target = '';
+            $parent_item->attr_title = '';
+            $parent_item->description = '';
+            $parent_item->xfn = '';
+            $parent_item->current = false;
+            $parent_item->current_item_parent = false;
+            $parent_item->current_item_ancestor = false;
+
+            if (array_key_exists($current_slug, $pillars)) {
+                $parent_item->classes[] = 'current-menu-ancestor';
+            }
+
+            $new_sorted[] = $parent_item;
+
+            // Create sub-items for each pillar under "Our Work"
+            $idx = 1;
+            foreach ($pillars as $slug_key => $title_val) {
+                $sub_id = $parent_id + $idx;
+                $mock_item = new stdClass();
+                $mock_item->ID = $sub_id;
+                $mock_item->db_id = $sub_id;
+                $mock_item->title = $title_val;
+                $mock_item->url = home_url('/' . $slug_key . '/');
+                $mock_item->menu_item_parent = $parent_id;
+                $mock_item->object_id = $sub_id;
+                $mock_item->object = 'custom';
+                $mock_item->type = 'custom';
+                $mock_item->type_label = 'Custom Link';
+                $mock_item->classes = ['menu-item', 'menu-item-type-custom', 'menu-item-object-custom'];
+                $mock_item->target = '';
+                $mock_item->attr_title = '';
+                $mock_item->description = '';
+                $mock_item->xfn = '';
+                $mock_item->current = false;
+                $mock_item->current_item_parent = false;
+                $mock_item->current_item_ancestor = false;
+
+                if ($current_slug === $slug_key) {
+                    $mock_item->classes[] = 'current-menu-item';
+                    $mock_item->current = true;
+                }
+
+                $new_sorted[] = $mock_item;
+                $idx++;
+            }
+            $our_work_inserted = true;
+        }
+    }
+
+    // Fallback if "Our Work" wasn't inserted (e.g. neither About nor Home was matched)
+    if (!$our_work_inserted) {
+        $parent_id = 999900;
+        $parent_item = new stdClass();
+        $parent_item->ID = $parent_id;
+        $parent_item->db_id = $parent_id;
+        $parent_item->title = 'Our Work';
+        $parent_item->url = '#';
+        $parent_item->menu_item_parent = 0;
+        $parent_item->object_id = $parent_id;
+        $parent_item->object = 'custom';
+        $parent_item->type = 'custom';
+        $parent_item->type_label = 'Custom Link';
+        $parent_item->classes = ['menu-item', 'menu-item-type-custom', 'menu-item-object-custom', 'menu-item-has-children', 'dropdown'];
+        $parent_item->target = '';
+        $parent_item->attr_title = '';
+        $parent_item->description = '';
+        $parent_item->xfn = '';
+        $parent_item->current = false;
+        $parent_item->current_item_parent = false;
+        $parent_item->current_item_ancestor = false;
+
+        if (array_key_exists($current_slug, $pillars)) {
+            $parent_item->classes[] = 'current-menu-ancestor';
+        }
+
+        $new_sorted[] = $parent_item;
+
+        $idx = 1;
+        foreach ($pillars as $slug_key => $title_val) {
+            $sub_id = $parent_id + $idx;
+            $mock_item = new stdClass();
+            $mock_item->ID = $sub_id;
+            $mock_item->db_id = $sub_id;
+            $mock_item->title = $title_val;
+            $mock_item->url = home_url('/' . $slug_key . '/');
+            $mock_item->menu_item_parent = $parent_id;
+            $mock_item->object_id = $sub_id;
+            $mock_item->object = 'custom';
+            $mock_item->type = 'custom';
+            $mock_item->type_label = 'Custom Link';
+            $mock_item->classes = ['menu-item', 'menu-item-type-custom', 'menu-item-object-custom'];
+            $mock_item->target = '';
+            $mock_item->attr_title = '';
+            $mock_item->description = '';
+            $mock_item->xfn = '';
+            $mock_item->current = false;
+            $mock_item->current_item_parent = false;
+            $mock_item->current_item_ancestor = false;
+
+            if ($current_slug === $slug_key) {
+                $mock_item->classes[] = 'current-menu-item';
+                $mock_item->current = true;
+            }
+
+            $new_sorted[] = $mock_item;
+            $idx++;
+        }
+    }
+
+    return $new_sorted;
+}, 10, 2);

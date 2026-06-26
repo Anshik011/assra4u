@@ -1,0 +1,137 @@
+<section class="page-banner">
+    <div class="image-layer" style="background-image:url(images/background/bg-banner-1.jpg);"></div>
+    <div class="bottom-rotten-curve"></div>
+    <div class="auto-container">
+        <h1>Volunteer Registration</h1>
+        <ul class="bread-crumb clearfix">
+            <li><a href="{site_url}/">Home</a></li>
+            <li class="active">Join Us</li>
+        </ul>
+    </div>
+</section>
+
+<section class="contact-section" style="padding: 80px 0; background: #fafbfc;">
+    <div class="auto-container">
+        
+        <div class="form-column clearfix" style="width: 100%; float: none; margin: 0 auto; max-width: 800px; background: #ffffff; padding: 50px 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(14,34,70,0.05); border: 1px solid #eaeaea;">
+            <div class="inner clearfix">
+            
+                <div class="sec-title centered" style="margin-bottom: 40px;">
+                    <div class="sub-title" style="color: #28a745; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Become a Part of ASSRA</div>
+                    <h2 style="color: #0e2246; font-size: 32px; font-weight: 800; line-height: 1.2;">Volunteer Application Form</h2>
+                    <div class="text" style="color: #6c7a9c; margin-top: 15px;">Complete the form below to apply for a volunteer position. Our team will review your interest and reach out to align on field work opportunities.</div>
+                </div>
+
+                <div id="volunteer-success-msg" style="display:none; background:#d4edda; color:#155724; padding:20px; border-radius:8px; margin-bottom:30px; text-align:center; border:1px solid #c3e6cb;">
+                    <h4 style="margin-bottom: 5px; font-weight: 700;">Submission Received!</h4>
+                    <p style="margin: 0; font-size: 15px;">Thank you for your interest in volunteering with ASSRA. We have received your application and will get back to you shortly.</p>
+                </div>
+                <script>
+                    (function() {
+                        var params = new URLSearchParams(window.location.search);
+                        if (params.has('success')) {
+                            var el = document.getElementById('volunteer-success-msg');
+                            if (el) el.style.display = 'block';
+                        }
+                    })();
+                </script>
+
+                <div class="contact-form">
+                    <form method="post" action="__ADMIN_POST_URL__" id="assra-volunteer-form">
+                        <input type="hidden" name="action" value="assra_volunteer_form">
+                        <input type="hidden" name="assra_volunteer_token" id="assra_volunteer_token" value="">
+                        
+                        <script>
+                            (function() {
+                                var field = document.getElementById('assra_volunteer_token');
+                                if (field && typeof assra_ajax !== 'undefined') {
+                                    field.value = assra_ajax.volunteer_nonce;
+                                }
+                            })();
+                        </script>
+                        
+                        <div class="row clearfix">                                    
+                            <div class="col-md-6 col-sm-12 form-group" style="margin-bottom: 25px;">
+                                <label style="display: block; font-weight: 700; color: #0e2246; margin-bottom: 8px; font-size: 14px;">Full Name <span style="color: red;">*</span></label>
+                                <input type="text" name="name" placeholder="Enter your full name" required="" style="width: 100%; padding: 12px 20px; border: 1px solid #eaeaea; border-radius: 8px; font-size: 15px; outline: none; background: #fafbfc; color: #333; transition: all 0.3s;">
+                            </div>
+                            
+                            <div class="col-md-6 col-sm-12 form-group" style="margin-bottom: 25px;">
+                                <label style="display: block; font-weight: 700; color: #0e2246; margin-bottom: 8px; font-size: 14px;">Phone Number <span style="color: red;">*</span></label>
+                                <input type="text" name="phone" placeholder="Enter phone number" required="" style="width: 100%; padding: 12px 20px; border: 1px solid #eaeaea; border-radius: 8px; font-size: 15px; outline: none; background: #fafbfc; color: #333; transition: all 0.3s;">
+                            </div>
+
+                            <div class="col-md-12 col-sm-12 form-group" style="margin-bottom: 25px;">
+                                <label style="display: block; font-weight: 700; color: #0e2246; margin-bottom: 8px; font-size: 14px;">Email Address <span style="color: red;">*</span></label>
+                                <input type="email" name="email" placeholder="Enter email address" required="" style="width: 100%; padding: 12px 20px; border: 1px solid #eaeaea; border-radius: 8px; font-size: 15px; outline: none; background: #fafbfc; color: #333; transition: all 0.3s;">
+                            </div>
+                            
+                            <div class="col-md-12 col-sm-12 form-group" style="margin-bottom: 25px;">
+                                <label style="display: block; font-weight: 700; color: #0e2246; margin-bottom: 12px; font-size: 14px;">Areas of Interest (Select all that apply) <span style="color: red;">*</span></label>
+                                <div style="display: flex; flex-wrap: wrap; gap: 20px; padding: 15px 20px; border: 1px solid #eaeaea; border-radius: 8px; background: #fafbfc;">
+                                    <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #4e5d78; cursor: pointer; font-size: 15px;">
+                                        <input type="checkbox" name="interest[]" value="Education" style="width: 16px; height: 16px; cursor: pointer;"> Education Support
+                                    </label>
+                                    <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #4e5d78; cursor: pointer; font-size: 15px;">
+                                        <input type="checkbox" name="interest[]" value="Elderly Care" style="width: 16px; height: 16px; cursor: pointer;"> Elderly Care & Shelters
+                                    </label>
+                                    <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #4e5d78; cursor: pointer; font-size: 15px;">
+                                        <input type="checkbox" name="interest[]" value="Empowerment" style="width: 16px; height: 16px; cursor: pointer;"> Livelihood & Livelihood
+                                    </label>
+                                    <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #4e5d78; cursor: pointer; font-size: 15px;">
+                                        <input type="checkbox" name="interest[]" value="Environment" style="width: 16px; height: 16px; cursor: pointer;"> Environmental Initiatives
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 col-sm-12 form-group" style="margin-bottom: 30px;">
+                                <label style="display: block; font-weight: 700; color: #0e2246; margin-bottom: 8px; font-size: 14px;">Why do you want to volunteer with us? <span style="color: red;">*</span></label>
+                                <textarea name="message" placeholder="Tell us briefly about your background and why you want to support our mission..." required="" style="width: 100%; height: 150px; padding: 15px 20px; border: 1px solid #eaeaea; border-radius: 8px; font-size: 15px; outline: none; background: #fafbfc; color: #333; resize: vertical; transition: all 0.3s;"></textarea>
+                            </div>
+
+                            <div class="col-md-12 col-sm-12 form-group text-center">
+                                <button class="theme-btn btn-style-one" type="submit" name="submit-form" style="padding: 15px 40px; font-weight: 700;"><span class="btn-title">Submit Application</span></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+        
+    </div>
+</section>
+
+<div class="pillar-page">
+    <!-- CALL TO ACTION & CSR SECTION -->
+    <section class="cta-section section-padding" style="border-top: none;">
+        <div class="auto-container">
+            <div class="cta-grid">
+                <!-- CTA Left -->
+                <div class="cta-left">
+                    <h2>Join Our Mission & Help Make a Difference</h2>
+                    <p>Your support can provide education to children, comfort to elderly, empowerment to women, and sustainability to our environment. Join us in transforming lives.</p>
+                    <a href="{site_url}/donate/" class="cta-btn">Donate Now</a>
+                </div>
+                <!-- CTA Right (CSR) -->
+                <div class="cta-right">
+                    <h3>For CSR Support</h3>
+                    <ul class="csr-info-list">
+                        <li>
+                            <span>Contact Person</span>
+                            <strong>Mrs. Deeti Ranjita Ray</strong>
+                        </li>
+                        <li>
+                            <span>Contact Phone</span>
+                            <strong>+91 98102 12917</strong>
+                        </li>
+                        <li>
+                            <span>Contact Email</span>
+                            <a href="mailto:ngoassra4u@gmail.com">ngoassra4u@gmail.com</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

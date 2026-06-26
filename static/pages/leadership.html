@@ -1,40 +1,599 @@
+<style>
+/* ==========================================================================
+   ASSRA LEADERSHIP SECTION PREMIUM STYLING
+   ========================================================================== */
+.leadership-section {
+    padding: 80px 0;
+    background-color: #fafbfc;
+}
+
+.leadership-group-wrapper {
+    margin-bottom: 70px;
+}
+
+.leadership-group-wrapper:last-child {
+    margin-bottom: 0;
+}
+
+/* Enhanced Section Title */
+.leadership-section .sec-title {
+    margin-bottom: 45px;
+}
+
+.leadership-section .sec-title h2 {
+    color: #0e2246;
+    font-weight: 700;
+    font-size: 32px;
+    margin-bottom: 10px;
+    position: relative;
+    display: inline-block;
+}
+
+.leadership-section .sec-title .sub-title {
+    font-size: 13px;
+    color: #28a745;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.leadership-section .sec-title .divider {
+    margin: 12px auto 0;
+    width: 60px;
+    height: 3px;
+    background: #28a745;
+    position: relative;
+}
+
+.leadership-section .sec-title .divider span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 6px;
+    background: #0e2246;
+    border-radius: 2px;
+}
+
+/* Cards Layout */
+.leader-card-wrapper {
+    margin-bottom: 30px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.leader-card-wrapper.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.leader-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 8px 20px rgba(14, 34, 70, 0.02);
+    overflow: hidden;
+    height: 100%;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.leader-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 30px rgba(14, 34, 70, 0.08);
+    border-color: #28a745;
+}
+
+.leader-img-box {
+    width: 100%;
+    height: 300px;
+    background-color: #f7f9fa;
+    position: relative;
+    overflow: hidden;
+}
+
+.leader-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.leader-card:hover .leader-img-box img {
+    transform: scale(1.05);
+}
+
+.leader-info-box {
+    padding: 22px 20px;
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.leader-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0e2246;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
+}
+
+.leader-role {
+    font-size: 13px;
+    font-weight: 600;
+    color: #28a745;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 15px;
+}
+
+/* Circular Bio Button */
+.leader-bio-trigger {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f5f8f6;
+    border: 1px solid rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: auto;
+    outline: none !important;
+}
+
+.leader-card:hover .leader-bio-trigger {
+    background-color: #28a745;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
+    transform: rotate(90deg);
+}
+
+/* Modal Overlay Styling */
+.bio-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(14, 34, 70, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+.bio-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.bio-modal-card {
+    background: #ffffff;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.bio-modal-overlay.active .bio-modal-card {
+    transform: scale(1);
+}
+
+.bio-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #a0aec0;
+    cursor: pointer;
+    z-index: 10;
+    transition: color 0.2s ease;
+    line-height: 1;
+    outline: none !important;
+}
+
+.bio-modal-close:hover {
+    color: #0e2246;
+}
+
+.bio-modal-body {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    max-height: 85vh;
+}
+
+.bio-modal-left {
+    width: 38%;
+    background-color: #f8fafb;
+    padding: 40px 30px;
+    text-align: center;
+    border-right: 1px solid #edf2f7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.bio-modal-img-wrapper {
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid #ffffff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+}
+
+.bio-modal-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bio-modal-left h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0e2246;
+    margin: 0 0 8px 0;
+}
+
+.modal-role-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: #28a745;
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+}
+
+.bio-modal-right {
+    width: 62%;
+    padding: 45px;
+    overflow-y: auto;
+}
+
+.bio-modal-right h4 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #28a745;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.bio-modal-divider {
+    width: 35px;
+    height: 3px;
+    background-color: #28a745;
+    margin-bottom: 25px;
+}
+
+.modal-bio-content {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #4e5d78;
+}
+
+.modal-bio-content p {
+    margin-bottom: 15px;
+    color: #4e5d78;
+    line-height: 1.7;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .bio-modal-body {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    
+    .bio-modal-left {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #edf2f7;
+        padding: 35px 20px;
+    }
+    
+    .bio-modal-right {
+        width: 100%;
+        padding: 30px 20px;
+    }
+    
+    .bio-modal-img-wrapper {
+        width: 130px;
+        height: 130px;
+    }
+}
+</style>
+
+<!-- Banner section -->
 <section class="page-banner">
     <div class="image-layer" style="background-image:url(images/background/bg-banner-1.jpg);"></div>
     <div class="bottom-rotten-curve"></div>
     <div class="auto-container">
         <h1>Our Leadership</h1>
         <ul class="bread-crumb clearfix">
-            <li><a href="/">Home</a></li>
+            <li><a href="{site_url}/">Home</a></li>
             <li class="active">Board Members</li>
         </ul>
     </div>
 </section>
 
-<section class="team-section">
+<!-- Dynamic Leadership Grid Section -->
+<section class="leadership-section">
     <div class="auto-container">
-        <div class="row clearfix">
+        
+        <!-- Hidden source query where WP outputs the board member list -->
+        <div id="raw-members-source" style="display: none;">
             [universal_loop type="board_member" count="12"]
-            <div class="team-block col-lg-3 col-md-6 col-sm-12">
-                <div class="inner-box">
-                    <div class="image-box" style="background: #f4f6f8; min-height: 300px;">
-                        <img src="{image}" alt="{title}" onerror="this.onerror=null; this.src='images/resource/no-image.webp';" style="width: 100%; height: 300px; object-fit: cover;">
-                    </div>
-                    <div class="lower-content" style="text-align: center; padding-top: 20px;">
-                        <h3>{title}</h3>
-                        <div class="designation" style="color: #ff5e14; font-size: 14px;">{text}</div>
-                    </div>
-                </div>
+            <div class="raw-member-item">
+                <span class="raw-title">{title}</span>
+                <div class="raw-bio">{full_text}</div>
+                <img class="raw-img" src="{image}" alt="{title}" onerror="this.onerror=null; this.src='images/resource/no-image.webp';">
             </div>
             [/universal_loop]
         </div>
+
+        <!-- Group 1: Office Bearers -->
+        <div class="leadership-group-wrapper" id="office-bearers-group" style="display: none;">
+            <div class="sec-title text-center">
+                <span class="sub-title">ASSRA Executive Body</span>
+                <h2>Office Bearers</h2>
+                <div class="divider"><span></span></div>
+            </div>
+            <div class="row clearfix justify-content-center" id="office-bearers-grid">
+                <!-- Sorted cards injected here -->
+            </div>
+        </div>
+
+        <!-- Group 2: Board Members -->
+        <div class="leadership-group-wrapper" id="board-members-group" style="display: none;">
+            <div class="sec-title text-center" style="margin-top: 50px;">
+                <span class="sub-title">ASSRA Support Team</span>
+                <h2>Board Members</h2>
+                <div class="divider"><span></span></div>
+            </div>
+            <div class="row clearfix justify-content-center" id="board-members-grid">
+                <!-- Sorted cards injected here -->
+            </div>
+        </div>
+
     </div>
 </section>
 
-<section class="call-to-action-two">
-    <div class="auto-container">
-        <div class="inner clearfix">
-            <div class="title-box"><h2>Become A Volunteer</h2></div>
-            <div class="link-box"><a href="/contact" class="theme-btn btn-style-five"><span class="btn-title">Get Involved</span></a></div>
+<div class="pillar-page">
+    <!-- CALL TO ACTION & CSR SECTION -->
+    <section class="cta-section section-padding">
+        <div class="auto-container">
+            <div class="cta-grid">
+                <!-- CTA Left -->
+                <div class="cta-left">
+                    <h2>Join Our Mission & Help Make a Difference</h2>
+                    <p>Your support can provide education to children, comfort to elderly, empowerment to women, and sustainability to our environment. Join us in transforming lives.</p>
+                    <a href="{site_url}/donate/" class="cta-btn">Donate Now</a>
+                </div>
+                <!-- CTA Right (CSR) -->
+                <div class="cta-right">
+                    <h3>For CSR Support</h3>
+                    <ul class="csr-info-list">
+                        <li>
+                            <span>Contact Person</span>
+                            <strong>Mrs. Deeti Ranjita Ray</strong>
+                        </li>
+                        <li>
+                            <span>Contact Phone</span>
+                            <strong>+91 98102 12917</strong>
+                        </li>
+                        <li>
+                            <span>Contact Email</span>
+                            <a href="mailto:ngoassra4u@gmail.com">ngoassra4u@gmail.com</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Biography Modal -->
+<div class="bio-modal-overlay" id="bio-modal">
+    <div class="bio-modal-card">
+        <button class="bio-modal-close" id="bio-close-btn" aria-label="Close modal">&times;</button>
+        <div class="bio-modal-body">
+            <div class="bio-modal-left">
+                <div class="bio-modal-img-wrapper">
+                    <img id="modal-img" src="" alt="Leader Photo">
+                </div>
+                <h3 id="modal-name">Leader Name</h3>
+                <div id="modal-role" class="modal-role-badge">Role</div>
+            </div>
+            <div class="bio-modal-right">
+                <h4>Biography</h4>
+                <div class="bio-modal-divider"></div>
+                <div id="modal-bio-text" class="modal-bio-content">Biography text...</div>
+            </div>
         </div>
     </div>
-</section>
+</div>
+
+<!-- Sorting, Separation & Modal JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const rawItems = document.querySelectorAll("#raw-members-source .raw-member-item");
+    const officeBearersGrid = document.getElementById("office-bearers-grid");
+    const boardMembersGrid = document.getElementById("board-members-grid");
+    const officeBearersGroup = document.getElementById("office-bearers-group");
+    const boardMembersGroup = document.getElementById("board-members-group");
+
+    // Modal elements
+    const bioModal = document.getElementById("bio-modal");
+    const modalCloseBtn = document.getElementById("bio-close-btn");
+    const modalImg = document.getElementById("modal-img");
+    const modalName = document.getElementById("modal-name");
+    const modalRole = document.getElementById("modal-role");
+    const modalBioText = document.getElementById("modal-bio-text");
+
+    let officeBearersCount = 0;
+    let boardMembersCount = 0;
+
+    // Helper to generate personalized default biographies when the DB is empty
+    function getFallbackBio(name, role) {
+        const cleanRole = role ? role.trim() : 'Board Member';
+        const cleanName = name ? name.trim() : 'Board Member';
+        const lowercaseRole = cleanRole.toLowerCase();
+
+        if (lowercaseRole.includes('president') && !lowercaseRole.includes('vice')) {
+            return `<p>CA (Dr.) Subhajit Sahoo is the President of ASSRA. A Chartered Accountant by profession, he holds multiple qualifications including Forensic Audit, DISA, MBA, and LLB. Under his visionary leadership, ASSRA has expanded its social footprint across several states including Odisha, Delhi, Uttar Pradesh, and Assam, driving relief operations, educational support, and elderly rehabilitation projects.</p>`;
+        }
+        if (lowercaseRole.includes('vice president')) {
+            return `<p>Mr. Nav Prabhat Singh is the Vice President of ASSRA. He actively oversees the organization's regional development initiatives, community engagement programs, and collaborations, dedicating his efforts to strategic implementation and grassroots empowerment.</p>`;
+        }
+        if (lowercaseRole.includes('secretary')) {
+            return `<p>Mrs. Deeti Ranjita Ray is the Secretary of ASSRA. She manages the administrative operations, coordinating between the board, volunteers, and local communities to ensure the seamless execution of ASSRA's welfare projects.</p>`;
+        }
+        if (lowercaseRole.includes('treasurer')) {
+            return `<p>Mr. Dharvendra Singh Yadav is the Treasurer of ASSRA. He is responsible for managing the organization's financial operations, budgeting, and ensuring absolute transparency and efficiency in the utilization of resources for social causes.</p>`;
+        }
+        return `<p>Serving as a valued Board Member of ASSRA, ${cleanName} contributes strategic guidance and active support to our various initiatives in elderly care, education, women empowerment, and environmental sustainability, ensuring the welfare of the vulnerable.</p>`;
+    }
+
+    rawItems.forEach(item => {
+        const rawTitle = item.querySelector(".raw-title").textContent.trim();
+        const rawBio = item.querySelector(".raw-bio").innerHTML.trim();
+        const imgEl = item.querySelector(".raw-img");
+        const imgUrl = imgEl ? imgEl.getAttribute("src") : "images/resource/no-image.webp";
+
+        // Parse Name and Designation from comma-separated Title
+        const parts = rawTitle.split(",");
+        let name = rawTitle;
+        let role = "";
+
+        if (parts.length > 1) {
+            name = parts[0].trim();
+            role = parts.slice(1).join(",").trim();
+        }
+
+        // Clean up some title details if needed (e.g. spelling corrections or matching standard format)
+        if (name === "Subhajit Sahoo") name = "CA (Dr.) Subhajit Sahoo";
+        if (name === "Ms. Deepti Ranjita Ray") name = "Mrs. Deeti Ranjita Ray";
+        if (name === "Mr. Dharvender Singh Yadav") name = "Mr. Dharvendra Singh Yadav";
+        if (name === "Ms. Seema Swain") name = "Mrs. Seema";
+
+        // Determine if they are Office Bearers
+        const lowercaseRole = role.toLowerCase();
+        const isOfficeBearer = lowercaseRole.includes("president") || 
+                               lowercaseRole.includes("secretary") || 
+                               lowercaseRole.includes("treasurer") || 
+                               lowercaseRole.includes("vp");
+
+        // Format clean biography (DB or fallback)
+        const finalBio = (rawBio.replace(/<[^>]*>/g, "").trim().length > 0) ? rawBio : getFallbackBio(name, role);
+
+        // Build Card HTML
+        const cardCol = document.createElement("div");
+        cardCol.className = "col-lg-3 col-md-6 col-sm-12 leader-card-wrapper";
+        
+        cardCol.innerHTML = `
+            <div class="leader-card">
+                <div class="leader-img-box">
+                    <img src="${imgUrl}" alt="${name}" onerror="this.onerror=null; this.src='images/resource/no-image.webp';">
+                </div>
+                <div class="leader-info-box">
+                    <h3 class="leader-name">${name}</h3>
+                    <div class="leader-role">${role || 'Board Member'}</div>
+                    <button class="leader-bio-trigger" title="View Biography">
+                        <span class="fa fa-plus"></span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Add Click Listener to Trigger Modal
+        const trigger = cardCol.querySelector(".leader-bio-trigger");
+        trigger.addEventListener("click", function () {
+            modalImg.src = imgUrl;
+            modalName.textContent = name;
+            modalRole.textContent = role || 'Board Member';
+            modalBioText.innerHTML = finalBio;
+            bioModal.classList.add("active");
+            document.body.style.overflow = "hidden"; // Prevent background scroll
+        });
+
+        // Append to correct grid
+        if (isOfficeBearer) {
+            officeBearersGrid.appendChild(cardCol);
+            officeBearersCount++;
+        } else {
+            boardMembersGrid.appendChild(cardCol);
+            boardMembersCount++;
+        }
+    });
+
+    // Make groups visible if they have members
+    if (officeBearersCount > 0) {
+        officeBearersGroup.style.display = "block";
+    }
+    if (boardMembersCount > 0) {
+        boardMembersGroup.style.display = "block";
+    }
+
+    // Trigger lazy animations after layout settles
+    setTimeout(() => {
+        document.querySelectorAll(".leader-card-wrapper").forEach((card, idx) => {
+            setTimeout(() => {
+                card.classList.add("show");
+            }, idx * 100);
+        });
+    }, 100);
+
+    // Modal Close handlers
+    function closeModal() {
+        bioModal.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+
+    modalCloseBtn.addEventListener("click", closeModal);
+    bioModal.addEventListener("click", function (e) {
+        if (e.target === bioModal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && bioModal.classList.contains("active")) {
+            closeModal();
+        }
+    });
+});
+</script>

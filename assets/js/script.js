@@ -3,9 +3,9 @@
 
     // Preloader
     function handlePreloader() {
-        if ($('.preloader').length) {
+        if ($('.preloader').length && !$('body').hasClass('page-loaded')) {
             $('body').addClass('page-loaded');
-            $('.preloader').delay(1500).fadeOut(0);
+            $('.preloader').delay(1000).fadeOut(300);
         }
     }
 
@@ -153,6 +153,62 @@
         });
     }
 
+    // Patrons logic: if > 9 items, group into 9-logo slides (3x3 grid) and turn into carousel, otherwise show static 3-column grid
+    if ($('.patrons-grid-container').length) {
+        var patronsList = $('.patrons-grid-container');
+        var patronItems = patronsList.find('.patron-item');
+        var patronsCount = patronItems.length;
+
+        if (patronsCount > 9) {
+            // Clear current flat layout in container
+            patronsList.empty();
+            
+            // Group the patron items into chunks of 9
+            var chunkSize = 9;
+            for (var i = 0; i < patronsCount; i += chunkSize) {
+                var chunk = patronItems.slice(i, i + chunkSize);
+                var slideDiv = $('<div class="patrons-slide-grid row clearfix"></div>');
+                chunk.addClass('col-4 mb-3').appendTo(slideDiv);
+                patronsList.append(slideDiv);
+            }
+            
+            // Initialize Owl Carousel (each slide displays a 9-logo grid)
+            patronsList.addClass('owl-carousel owl-theme patrons-carousel');
+            patronsList.owlCarousel({
+                loop: true,
+                margin: 0,
+                nav: false,
+                dots: true,
+                autoplay: true,
+                autoplayTimeout: 5000,
+                smartSpeed: 600,
+                items: 1
+            });
+        } else {
+            // Under 9 items: just display as a static 3-column grid
+            patronsList.addClass('row clearfix');
+            patronItems.addClass('col-4 mb-3');
+        }
+    }
+
+    // Awards Carousel (Stays vertical list by default; becomes carousel if count > 3)
+    if ($('.awards-list').length) {
+        var awardsCount = $('.awards-list .award-item').length;
+        if (awardsCount > 3) {
+            $('.awards-list').addClass('owl-carousel owl-theme');
+            $('.awards-list').owlCarousel({
+                loop: true,
+                margin: 20,
+                nav: false,
+                dots: true,
+                autoplay: true,
+                autoplayTimeout: 5000,
+                smartSpeed: 600,
+                items: 1
+            });
+        }
+    }
+
     // Testimonials Carousel
     if ($('.testimonials-carousel').length) {
         $('.testimonials-carousel').owlCarousel({
@@ -275,6 +331,11 @@
 
     $(window).on('scroll', function() { headerStyle(); });
     $(window).on('load', function() { handlePreloader(); });
+
+    // Fallback: force preloader to disappear after 2.5 seconds
+    setTimeout(function() {
+        handlePreloader();
+    }, 2500);
 
 })(window.jQuery);
 
