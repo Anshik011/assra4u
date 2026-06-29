@@ -275,7 +275,8 @@ function utw_load_static_page($slug) {
     };
 
     $head_html   = $capture($header_file);
-    $current_url = home_url(sanitize_url($_SERVER['REQUEST_URI']));
+    global $wp;
+    $current_url = home_url(add_query_arg([], $wp->request));
 
     $seo_title = get_bloginfo('name') . " | Non-Profit Organization";
     $seo_desc  = "ASSRA is a non-profit NGO working for Education, Empowerment, Elderly Care, and Environmental initiatives.";
