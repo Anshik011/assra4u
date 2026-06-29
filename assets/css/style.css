@@ -10753,7 +10753,8 @@ a.ui-button:active, .ui-button:active,
     padding: 0 15px;
 }
 
-.pillar-page .pillar-hero .hero-content h1 {
+.pillar-page .pillar-hero .hero-content h1,
+.pillar-page .pillar-hero .hero-content h2 {
     font-size: clamp(2.5rem, 5vw, 4.5rem);
     font-weight: 900;
     color: #ffffff;
@@ -12620,4 +12621,17 @@ a.ui-button:active, .ui-button:active,
     margin: 40px auto;
     max-width: 600px;
     background-color: #ffffff;
+}
+
+/* Screen reader only helper (A11y/SEO) */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
