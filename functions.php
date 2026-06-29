@@ -884,8 +884,28 @@ add_action('save_post', function ($post_id) {
    [S5]  Amount cap
    [S12] Timing-safe signature
 ==============================*/
-if (!defined('RZP_KEY_ID'))     define('RZP_KEY_ID',     'rzp_test_SEkhbMuQglqWkJ');
-if (!defined('RZP_KEY_SECRET')) define('RZP_KEY_SECRET', 'zBRkbpmN174ITw7z40Q5hdFS');
+/**
+ * Fail-Secure: Enforce Razorpay Environment Configuration
+ */
+if (!defined('RZP_KEY_ID') || !defined('RZP_KEY_SECRET') || RZP_KEY_ID === '' || RZP_KEY_SECRET === '') {
+    
+    // 1. Guard the backend admin dashboard
+    add_action('admin_notices', function() {
+        echo '<div class="notice notice-error is-dismissible"><p><strong>ASSRA Theme Error:</strong> Razorpay Production Credentials are missing or empty in wp-config.php. Payment gateways are disabled.</p></div>';
+    });
+
+    // 2. Short-circuit frontend AJAX payment handlers to prevent silent failures
+    $abort_handler = function() {
+        wp_send_json_error([
+            'message' => 'Payment gateway configuration error. Please contact the administrator.'
+        ], 500);
+    };
+
+    add_action('wp_ajax_assra_create_order', $abort_handler);
+    add_action('wp_ajax_nopriv_assra_create_order', $abort_handler);
+    add_action('wp_ajax_assra_verify_payment', $abort_handler);
+    add_action('wp_ajax_nopriv_assra_verify_payment', $abort_handler);
+}
 
 add_action('init', function () {
     register_post_type('assra_donation', [
