@@ -920,27 +920,40 @@ add_action('init', function () {
 add_action('wp_ajax_assra_create_order',        'assra_create_order');
 add_action('wp_ajax_nopriv_assra_create_order', 'assra_create_order');
 function assra_create_order() {
-    if (!check_ajax_referer('assra_donation_nonce', 'nonce', false)) wp_send_json_error('Security check failed.');
+    if (!check_ajax_referer('assra_donation_nonce', 'nonce', false)) {
+        wp_send_json_error('Security check failed.', 403);
+    }
     $amount = intval($_POST['amount'] ?? 0);
-    if (!$amount || $amount < 1 || $amount > 100000) wp_send_json_error('Invalid amount. Must be ₹1–₹1,00,000.');
+    if (!$amount || $amount < 1 || $amount > 100000) {
+        wp_send_json_error('Invalid amount. Must be ₹1–₹1,00,000.', 400);
+    }
     $response = wp_remote_post('https://api.razorpay.com/v1/orders', [
         'headers' => ['Authorization' => 'Basic ' . base64_encode(RZP_KEY_ID . ':' . RZP_KEY_SECRET), 'Content-Type' => 'application/json'],
         'body'    => wp_json_encode(['receipt'=>'rcpt_'.time(),'amount'=>$amount*100,'currency'=>'INR','payment_capture'=>1]),
     ]);
-    if (is_wp_error($response)) wp_send_json_error('Connection error.');
+    if (is_wp_error($response)) {
+        wp_send_json_error('Connection to payment gateway failed. Please try again.', 500);
+    }
     $body = json_decode(wp_remote_retrieve_body($response), true);
-    if (isset($body['id'])) wp_send_json_success(['order_id'=>$body['id'],'rzp_key'=>RZP_KEY_ID]);
-    else wp_send_json_error('Could not create order.');
+    if (isset($body['id'])) {
+        wp_send_json_success(['order_id'=>$body['id'],'rzp_key'=>RZP_KEY_ID]);
+    } else {
+        wp_send_json_error('Could not create order. Please contact support.', 500);
+    }
 }
 
 add_action('wp_ajax_assra_verify_payment',        'assra_verify_payment');
 add_action('wp_ajax_nopriv_assra_verify_payment', 'assra_verify_payment');
 function assra_verify_payment() {
-    if (!check_ajax_referer('assra_donation_nonce', 'nonce', false)) wp_send_json_error('Security check failed.');
+    if (!check_ajax_referer('assra_donation_nonce', 'nonce', false)) {
+        wp_send_json_error('Security check failed.', 403);
+    }
     $payment_id = sanitize_text_field($_POST['razorpay_payment_id'] ?? '');
     $order_id   = sanitize_text_field($_POST['razorpay_order_id']   ?? '');
     $signature  = sanitize_text_field($_POST['razorpay_signature']  ?? '');
-    if (empty($payment_id)||empty($order_id)||empty($signature)) wp_send_json_error('Missing payment data.');
+    if (empty($payment_id) || empty($order_id) || empty($signature)) {
+        wp_send_json_error('Missing required payment verification parameters.', 400);
+    }
     if (hash_equals(hash_hmac('sha256', $order_id.'|'.$payment_id, RZP_KEY_SECRET), $signature)) {
         $donor_name = sanitize_text_field($_POST['donor_name']  ?? '');
         $amount     = intval($_POST['amount']                   ?? 0);
@@ -951,9 +964,16 @@ function assra_verify_payment() {
             'post_type'    => 'assra_donation', 'post_status' => 'publish',
             'post_content' => "<strong>Payment ID:</strong> ".esc_html($payment_id)."\n<strong>Order ID:</strong> ".esc_html($order_id)."\n<strong>Phone:</strong> ".esc_html($phone)."\n<strong>Purpose:</strong> ".esc_html($purpose),
         ]);
-        if ($post_id) { update_post_meta($post_id,'payment_id',$payment_id); update_post_meta($post_id,'amount',$amount); update_post_meta($post_id,'phone',$phone); }
+        if (!$post_id || is_wp_error($post_id)) {
+            wp_send_json_error('Database failure. The transaction log could not be saved.', 500);
+        }
+        update_post_meta($post_id, 'payment_id', $payment_id);
+        update_post_meta($post_id, 'amount', $amount);
+        update_post_meta($post_id, 'phone', $phone);
         wp_send_json_success('Payment Verified and Logged');
-    } else { wp_send_json_error('Signature Verification Failed'); }
+    } else {
+        wp_send_json_error('Signature Verification Failed.', 400);
+    }
 }
 
 /* ==============================
