@@ -4044,6 +4044,11 @@ img{
 	color:#28B463;
 }
 
+.main-footer .info-widget ul li a span{
+	margin-right: 8px;
+	color: #28B463;
+}
+
 .main-footer .news-widget .news-post{
 	position:relative;
 	padding-left:120px;

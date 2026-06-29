@@ -473,6 +473,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const cleanName = name ? name.trim() : 'Board Member';
         const lowercaseRole = cleanRole.toLowerCase();
 
+        if (cleanName.includes('Subhajit Sahoo') || (lowercaseRole.includes('director') && !lowercaseRole.includes('assistant') && !lowercaseRole.includes('deputy'))) {
+            return `<p>CA (Dr.) Subhajit Sahoo is the Director of ASSRA. A Chartered Accountant by profession, he holds multiple qualifications including Forensic Audit, DISA, MBA, and LLB. Under his visionary leadership, ASSRA has expanded its social footprint across several states including Odisha, Delhi, Uttar Pradesh, and Assam, driving relief operations, educational support, and elderly rehabilitation projects like Mo Ghara Old Age Home.</p>
+            <p>He is the proud recipient of the prestigious <strong>"Youth Inspiration Award"</strong> (in the category of Education & Social Service in the year 2018) and the <strong>"Man of Excellence Award"</strong> (in the category of Social Service in the year 2021) for his outstanding contributions to social service.</p>`;
+        }
         if (lowercaseRole.includes('president') && !lowercaseRole.includes('vice')) {
             return `<p>CA (Dr.) Subhajit Sahoo is the President of ASSRA. A Chartered Accountant by profession, he holds multiple qualifications including Forensic Audit, DISA, MBA, and LLB. Under his visionary leadership, ASSRA has expanded its social footprint across several states including Odisha, Delhi, Uttar Pradesh, and Assam, driving relief operations, educational support, and elderly rehabilitation projects.</p>`;
         }
@@ -505,7 +509,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // Clean up some title details if needed (e.g. spelling corrections or matching standard format)
-        if (name === "Subhajit Sahoo") name = "CA (Dr.) Subhajit Sahoo";
+        if (name === "Subhajit Sahoo" || name.includes("Subhajit Sahoo")) {
+            name = "CA (Dr.) Subhajit Sahoo";
+            role = "Director, ASSRA";
+        }
         if (name === "Ms. Deepti Ranjita Ray") name = "Mrs. Deeti Ranjita Ray";
         if (name === "Mr. Dharvender Singh Yadav") name = "Mr. Dharvendra Singh Yadav";
         if (name === "Ms. Seema Swain") name = "Mrs. Seema";
@@ -513,12 +520,18 @@ document.addEventListener("DOMContentLoaded", function () {
         // Determine if they are Office Bearers
         const lowercaseRole = role.toLowerCase();
         const isOfficeBearer = lowercaseRole.includes("president") || 
+                               lowercaseRole.includes("director") || 
                                lowercaseRole.includes("secretary") || 
                                lowercaseRole.includes("treasurer") || 
                                lowercaseRole.includes("vp");
 
         // Format clean biography (DB or fallback)
-        const finalBio = (rawBio.replace(/<[^>]*>/g, "").trim().length > 0) ? rawBio : getFallbackBio(name, role);
+        let finalBio = (rawBio.replace(/<[^>]*>/g, "").trim().length > 0) ? rawBio : getFallbackBio(name, role);
+        if (name.includes("Subhajit Sahoo")) {
+            finalBio = `<p>CA (Dr.) Subhajit Sahoo is the Director of ASSRA. A Chartered Accountant by profession, he holds multiple qualifications including Forensic Audit, DISA, MBA, and LLB.</p>
+            <p>Under his visionary leadership, ASSRA has expanded its social footprint across several states including Odisha, Delhi, Uttar Pradesh, and Assam, driving relief operations, educational support, and elderly rehabilitation projects like Mo Ghara Old Age Home.</p>
+            <p>He is the winner of the prestigious <strong>"Youth Inspiration Award"</strong> (in the category of Education & Social Service in the year 2018) and the <strong>"Man of Excellence Award"</strong> (in the category of Social Service in the year 2021) for his outstanding contributions to social service.</p>`;
+        }
 
         // Build Card HTML
         const cardCol = document.createElement("div");
