@@ -769,7 +769,10 @@ function utw_universal_loop_handler($atts, $content = null) {
 
     $query = new WP_Query($args);
     if (!$query->have_posts()) {
-        return '<div class="no-data-placeholder col-12" style="text-align:center;padding:60px 20px;background:#fafafa;border:2px dashed #e0e0e0;border-radius:10px;margin-bottom:30px;width:100%;"><div style="font-size:45px;color:#28a745;margin-bottom:15px;"><i class="fas fa-folder-open"></i></div><h3 style="font-size:24px;color:#1a365d;margin-bottom:10px;">More Updates Coming Soon</h3><p style="color:#666;font-size:16px;max-width:500px;margin:0 auto;">We are currently organizing new content for this section. Please check back later.</p></div>';
+        if ($atts['type'] === 'document' && $atts['layout'] === 'table') {
+            return '<tr class="no-data-row"><td colspan="3" class="no-data-cell"><div class="no-data-placeholder"><div class="placeholder-icon"><i class="fas fa-folder-open"></i></div><h3>More Updates Coming Soon</h3><p>We are currently organizing new documents for this section. Please check back later.</p></div></td></tr>';
+        }
+        return '<div class="no-data-placeholder col-12"><div class="placeholder-icon"><i class="fas fa-folder-open"></i></div><h3>More Updates Coming Soon</h3><p>We are currently organizing new content for this section. Please check back later.</p></div>';
     }
 
     $template_html = '';

@@ -12574,4 +12574,50 @@ a.ui-button:active, .ui-button:active,
     overflow: hidden;
     text-overflow: ellipsis;
     min-height: 4.5em;
+}
+
+/* ==========================================================================
+   Reusable Empty State Placeholder & Fallbacks
+   ========================================================================== */
+.no-data-placeholder {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: #fafafa;
+    border: 2px dashed #e0e0e0;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+.no-data-placeholder .placeholder-icon {
+    font-size: 45px;
+    color: #28a745;
+    margin-bottom: 15px;
+}
+.no-data-placeholder h3 {
+    font-size: 24px;
+    color: #1a365d;
+    margin-bottom: 10px;
+}
+.no-data-placeholder p {
+    color: #666;
+    font-size: 16px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Document Table Empty State Row spacing adjustments */
+.no-data-row .no-data-cell {
+    padding: 30px !important;
+    border-bottom: none !important;
+}
+.no-data-row .no-data-placeholder {
+    margin-bottom: 0;
+    background-color: #fcfcfc;
+}
+
+/* Leadership Fallback placement */
+.leadership-fallback .no-data-placeholder {
+    margin: 40px auto;
+    max-width: 600px;
+    background-color: #ffffff;
 }

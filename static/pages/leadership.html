@@ -581,6 +581,19 @@ document.addEventListener("DOMContentLoaded", function () {
         boardMembersGroup.style.display = "block";
     }
 
+    if (officeBearersCount === 0 && boardMembersCount === 0) {
+        const fallbackContainer = document.createElement("div");
+        fallbackContainer.className = "col-12 text-center leadership-fallback";
+        fallbackContainer.innerHTML = `
+            <div class="no-data-placeholder">
+                <div class="placeholder-icon"><i class="fas fa-folder-open"></i></div>
+                <h3>More Updates Coming Soon</h3>
+                <p>We are currently organizing new content for our leadership page. Please check back later.</p>
+            </div>
+        `;
+        document.querySelector(".leadership-section .auto-container").appendChild(fallbackContainer);
+    }
+
     // Trigger lazy animations after layout settles
     setTimeout(() => {
         document.querySelectorAll(".leader-card-wrapper").forEach((card, idx) => {
