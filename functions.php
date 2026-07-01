@@ -149,7 +149,7 @@ add_action('wp_head', function () {
     // Preload LCP image for the home page to improve PageSpeed score
     global $post;
     if (is_front_page() || is_home() || (isset($post) && $post->post_name === 'home')) {
-        echo '<link rel="preload" as="image" href="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/main-slider/7.jpg') . '">' . "\n";
+        echo '<link rel="preload" as="image" href="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/elderly-care/8a75003e-9aba-4525-877a-b4ebd0faf31d_IMG_8276.webp') . '">' . "\n";
     }
 
     echo '<script>var assra_ajax = {'
@@ -274,7 +274,28 @@ function utw_load_static_page($slug) {
         ob_start(); include($path); return ob_get_clean();
     };
 
-    $head_html   = $capture($header_file);
+    // Performance Optimization: Cache File I/O
+    $cache_capture = function ($path) use ($capture) {
+        $cache_key = 'assra_file_' . md5($path);
+        $cached = wp_cache_get($cache_key, 'assra_files');
+        if (false === $cached) {
+            $cached = $capture($path);
+            wp_cache_set($cache_key, $cached, 'assra_files', 3600);
+        }
+        return $cached;
+    };
+
+    $cache_file_get = function ($path) {
+        $cache_key = 'assra_file_' . md5($path);
+        $cached = wp_cache_get($cache_key, 'assra_files');
+        if (false === $cached) {
+            $cached = file_get_contents($path);
+            wp_cache_set($cache_key, $cached, 'assra_files', 3600);
+        }
+        return $cached;
+    };
+
+    $head_html   = $cache_capture($header_file);
     global $wp;
     $current_url = home_url(add_query_arg([], $wp->request));
 
@@ -285,19 +306,19 @@ function utw_load_static_page($slug) {
     if ($slug === 'education-work') {
         $seo_title = "Education NGO in India | Charity Supporting Children Education - ASSRA";
         $seo_desc  = "ASSRA is a leading non-profit NGO dedicated to providing quality education, nutrition, and support to underprivileged children in India. Join us in transforming lives.";
-        $seo_img   = $theme_uri . '/assets/images/resource/cause-image-1.jpg';
+        $seo_img   = $theme_uri . '/assets/images/education/WhatsApp Image 2026-07-01 at 8.25.34 AM.webp';
     } elseif ($slug === 'elderly-care') {
         $seo_title = "Elderly Care NGO in India | Supporting Destitute Senior Citizens - ASSRA";
         $seo_desc  = "ASSRA provides shelter, nutrition, healthcare, and rehabilitation for abandoned and destitute senior citizens, ensuring they live with safety and comfort.";
-        $seo_img   = $theme_uri . '/assets/images/main-slider/7.jpg';
+        $seo_img   = $theme_uri . '/assets/images/elderly-care/8a75003e-9aba-4525-877a-b4ebd0faf31d_IMG_8276.webp';
     } elseif ($slug === 'empowerment') {
         $seo_title = "Livelihood & Women Empowerment NGO | Skill Development - ASSRA";
         $seo_desc  = "ASSRA strengthens women and marginalized communities through vocational training, tailoring workshops, and digital literacy for sustainable livelihood.";
-        $seo_img   = $theme_uri . '/assets/images/main-slider/9.jpg';
+        $seo_img   = $theme_uri . '/assets/images/empowerment/ac41f0c0-9a8a-47b3-8595-e32beb8692f5_137815c9-4e93-4379-9556-ba88b93b19f6.webp';
     } elseif ($slug === 'environment') {
         $seo_title = "Environmental Conservation & Green Initiatives NGO - ASSRA";
         $seo_desc  = "ASSRA promotes environmental preservation, waste management, afforestation drives, and solar installations for a sustainable and green future.";
-        $seo_img   = $theme_uri . '/assets/images/main-slider/8.jpg';
+        $seo_img   = $theme_uri . '/assets/images/environment/031f56f1-0abd-432d-8a0c-8d816a8efc68_ec3.webp';
     } elseif ($slug === 'about-assra') {
         $seo_title = "About ASSRA NGO | Grassroots Development & Social Service India";
         $seo_desc  = "Learn about ASSRA's history, mission, vision, and core philosophy of transforming lives through sustainable grassroots social welfare initiatives.";
@@ -362,7 +383,7 @@ function utw_load_static_page($slug) {
         $head_html .= $meta_block . $wp_head_output;
     }
 
-    $body_html = file_get_contents($page_file);
+    $body_html = $cache_file_get($page_file);
 
     if (is_singular()) {
         $id    = get_the_ID();
@@ -377,7 +398,7 @@ function utw_load_static_page($slug) {
         $body_html = str_replace('{location}', get_post_meta($id, 'event_location', true) ?: 'Odisha, India',      $body_html);
     }
 
-    $foot_html = $capture($footer_file);
+    $foot_html = $cache_capture($footer_file);
 
     // [S7] Buffer wp_footer() — it echoes, does not return
     ob_start(); wp_footer(); $wp_footer_output = ob_get_clean();
@@ -448,16 +469,24 @@ add_shortcode('year_filter', function () {
         $s = $post->post_name;
         if (in_array($s, ['education','empowerment','elderly-care','environment','health'])) $current_pillar = $s;
     }
-    $years = $wpdb->get_col($wpdb->prepare("
-        SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm
-        INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-        INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-        INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-        INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
-        WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
-        AND p.post_type = 'gallery' AND p.post_status = 'publish' AND t.slug = %s
-        ORDER BY pm.meta_value DESC
-    ", $current_pillar));
+
+    // Performance Optimization: Cache Heavy unindexed 5-way JOIN query
+    $cache_key = 'assra_gallery_years_' . md5($current_pillar);
+    $years = get_transient($cache_key);
+    if (false === $years) {
+        $years = $wpdb->get_col($wpdb->prepare("
+            SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm
+            INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+            INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+            INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+            INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+            WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
+            AND p.post_type = 'gallery' AND p.post_status = 'publish' AND t.slug = %s
+            ORDER BY pm.meta_value DESC
+        ", $current_pillar));
+        set_transient($cache_key, $years, 12 * HOUR_IN_SECONDS);
+    }
+
     if (empty($years)) return '';
     $selected = isset($_GET['gallery_year']) ? intval($_GET['gallery_year']) : $years[0];
     ob_start();
@@ -476,19 +505,29 @@ add_shortcode('gallery_filter_bar', function () {
     $current_program = isset($_GET['program']) ? sanitize_key($_GET['program']) : '';
     $current_year = isset($_GET['gallery_year']) ? intval($_GET['gallery_year']) : 0;
 
-    $programs = get_terms([
-        'taxonomy' => 'assra_program',
-        'hide_empty' => false,
-    ]);
+    // Performance Optimization: Cache dynamic header category query
+    $programs = get_transient('assra_menu_programs');
+    if (false === $programs) {
+        $programs = get_terms([
+            'taxonomy' => 'assra_program',
+            'hide_empty' => false,
+        ]);
+        set_transient('assra_menu_programs', $programs, 12 * HOUR_IN_SECONDS);
+    }
 
-    $years = $wpdb->get_col("
-        SELECT DISTINCT pm.meta_value 
-        FROM {$wpdb->postmeta} pm
-        INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-        WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
-        AND p.post_type = 'gallery' AND p.post_status = 'publish'
-        ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC
-    ");
+    // Performance Optimization: Cache heavy unindexed CAST sorting lookup query
+    $years = get_transient('assra_gallery_years_all');
+    if (false === $years) {
+        $years = $wpdb->get_col("
+            SELECT DISTINCT pm.meta_value 
+            FROM {$wpdb->postmeta} pm
+            INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+            WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
+            AND p.post_type = 'gallery' AND p.post_status = 'publish'
+            ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC
+        ");
+        set_transient('assra_gallery_years_all', $years, 12 * HOUR_IN_SECONDS);
+    }
 
     ob_start();
     ?>
@@ -1056,10 +1095,11 @@ add_filter('wp_nav_menu_objects', function ($sorted_menu_items, $args) {
             $item->classes[] = 'menu-item-has-children';
             $item->classes[] = 'dropdown';
 
-            $terms = get_terms([
-                'taxonomy'   => 'assra_program',
-                'hide_empty' => false,
-            ]);
+            $terms = get_transient('assra_menu_programs');
+            if (false === $terms) {
+                $terms = get_terms(['taxonomy' => 'assra_program', 'hide_empty' => false]);
+                set_transient('assra_menu_programs', $terms, 12 * HOUR_IN_SECONDS);
+            }
 
             if (!is_wp_error($terms) && !empty($terms)) {
                 $sub_idx = 1;
@@ -1120,10 +1160,14 @@ add_filter('wp_nav_menu_objects', function ($sorted_menu_items, $args) {
             $item->classes[] = 'menu-item-has-children';
             $item->classes[] = 'dropdown';
 
-            $terms = get_terms([
-                'taxonomy'   => 'doc_type',
-                'hide_empty' => false,
-            ]);
+            $terms = get_transient('assra_menu_doc_types');
+            if (false === $terms) {
+                $terms = get_terms([
+                    'taxonomy'   => 'doc_type',
+                    'hide_empty' => false,
+                ]);
+                set_transient('assra_menu_doc_types', $terms, 12 * HOUR_IN_SECONDS);
+            }
 
             if (!is_wp_error($terms) && !empty($terms)) {
                 $sub_idx = 1;
@@ -1303,3 +1347,21 @@ add_filter('wp_nav_menu_objects', function ($sorted_menu_items, $args) {
 
     return $new_sorted;
 }, 10, 2);
+
+// Clear category menu transients on any term changes
+add_action('saved_term', function () {
+    delete_transient('assra_menu_programs');
+    delete_transient('assra_menu_doc_types');
+});
+
+// Clear gallery year transients when new gallery images are saved or edited
+add_action('save_post_gallery', function () {
+    global $wpdb;
+    $pillars = $wpdb->get_col("SELECT slug FROM {$wpdb->terms}");
+    if (!empty($pillars)) {
+        foreach ($pillars as $pillar) {
+            delete_transient('assra_gallery_years_' . md5($pillar));
+        }
+    }
+    delete_transient('assra_gallery_years_all');
+});
