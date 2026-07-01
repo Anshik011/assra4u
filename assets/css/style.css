@@ -442,7 +442,8 @@ figure{
 	background-color:rgba(0,0,0,0); 
 	background-position:center center; 
 	background-repeat:no-repeat; 
-	background-image:url(../images/icons/preloader.svg);
+	background-image:url(../images/logo-2.png);
+	background-size: 180px auto;
 	-webkit-transition: all 200ms ease;
 	-moz-transition: all 200ms ease;
 	-ms-transition: all 200ms ease;
@@ -10696,8 +10697,8 @@ a.ui-button:active, .ui-button:active,
 .pillar-page h3, 
 .pillar-page h4, 
 .pillar-page h5 {
-    font-family: 'Lato', sans-serif;
-    color: #2D1B69;
+    font-family: 'Inter', sans-serif;
+    color: #0f2246;
     font-weight: 700;
     line-height: 1.2;
 }
@@ -10802,7 +10803,7 @@ a.ui-button:active, .ui-button:active,
     font-weight: 800;
     line-height: 1.25;
     letter-spacing: -0.5px;
-    color: #2D1B69;
+    color: #0f2246;
 }
 
 .pillar-page .sec-title-premium.centered {
@@ -10832,7 +10833,7 @@ a.ui-button:active, .ui-button:active,
 }
 
 .pillar-page .why-content p strong {
-    color: #2D1B69;
+    color: #0f2246;
 }
 
 .pillar-page .why-features {
@@ -10847,7 +10848,7 @@ a.ui-button:active, .ui-button:active,
     align-items: center;
     gap: 12px;
     font-weight: 600;
-    color: #2D1B69;
+    color: #0f2246;
 }
 
 .pillar-page .why-feature-item i {
@@ -10937,7 +10938,7 @@ a.ui-button:active, .ui-button:active,
     margin: 0;
     font-size: 1.25rem;
     font-weight: 700;
-    color: #2D1B69;
+    color: #0f2246;
     transition: color 0.3s ease;
 }
 
@@ -11009,7 +11010,7 @@ a.ui-button:active, .ui-button:active,
 
 /* --- IMPACT STATS SECTION --- */
 .pillar-page .impact-stats-section {
-    background: linear-gradient(135deg, #2D1B69 0%, #4A2F8F 100%);
+    background: linear-gradient(135deg, #0f2246 0%, #1d3557 100%);
     color: #ffffff;
     position: relative;
     z-index: 1;
@@ -11108,7 +11109,7 @@ a.ui-button:active, .ui-button:active,
 .pillar-page .reach-card .reach-value {
     font-size: 2.25rem;
     font-weight: 800;
-    color: #2D1B69;
+    color: #0f2246;
     margin-bottom: 6px;
 }
 
@@ -11175,7 +11176,7 @@ a.ui-button:active, .ui-button:active,
     font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 12px;
-    color: #2D1B69;
+    color: #0f2246;
 }
 
 .pillar-page .story-content .excerpt {
@@ -11208,7 +11209,7 @@ a.ui-button:active, .ui-button:active,
 }
 
 .pillar-page .read-more-btn:hover {
-    color: #2D1B69;
+    color: #0f2246;
     transform: translateX(4px);
 }
 
@@ -11223,7 +11224,7 @@ a.ui-button:active, .ui-button:active,
     grid-template-columns: 1.2fr 0.8fr;
     gap: 50px;
     align-items: center;
-    background: linear-gradient(135deg, #2D1B69 0%, #4A2F8F 100%);
+    background: linear-gradient(135deg, #0f2246 0%, #1d3557 100%);
     border-radius: 24px;
     padding: 60px 70px;
     color: #ffffff;
@@ -11407,7 +11408,7 @@ a.ui-button:active, .ui-button:active,
     font-size: 2.25rem;
     font-weight: 800;
     margin-bottom: 8px;
-    color: #2D1B69;
+    color: #0f2246;
 }
 
 .pillar-page .modal-text .modal-tagline {
@@ -11578,7 +11579,7 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .section-main-title {
     font-size: 38px;
     font-weight: 800;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 25px;
     line-height: 1.25;
 }
@@ -11630,7 +11631,7 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .vision-card-title {
     font-size: 22px;
     font-weight: 700;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 15px;
 }
 
@@ -11642,7 +11643,7 @@ a.ui-button:active, .ui-button:active,
 
 /* Mission Highlight Block */
 .our-story-page .mission-highlight-card {
-    background: linear-gradient(135deg, #2D1B69 0%, #1A0E46 100%);
+    background: linear-gradient(135deg, #0f2246 0%, #050b16 100%);
     border-radius: 16px;
     padding: 50px;
     color: #ffffff;
@@ -11723,7 +11724,7 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .lifecycle-title {
     font-size: 16px;
     font-weight: 700;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 0;
 }
 
@@ -11760,13 +11761,13 @@ a.ui-button:active, .ui-button:active,
 
 .our-story-page .work-badge.outreach {
     background: rgba(45, 27, 105, 0.1);
-    color: #2D1B69;
+    color: #0f2246;
 }
 
 .our-story-page .work-title {
     font-size: 26px;
     font-weight: 800;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 20px;
 }
 
@@ -11803,7 +11804,7 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .award-desc {
     font-size: 16px;
     font-weight: 600;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     line-height: 1.5;
     margin-bottom: 0;
 }
@@ -11887,7 +11888,7 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .philosophy-card h3 {
     font-size: 26px;
     font-weight: 800;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 20px;
 }
 .our-story-page .philosophy-card p {
@@ -11917,7 +11918,7 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .lifecycle-detail-content h3 {
     font-size: 24px;
     font-weight: 800;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 15px;
 }
 .our-story-page .lifecycle-detail-content p {
@@ -11937,7 +11938,7 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .trust-evaluation-box h4 {
     font-size: 20px;
     font-weight: 700;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 12px;
 }
 .our-story-page .trust-evaluation-box p {
@@ -11949,14 +11950,14 @@ a.ui-button:active, .ui-button:active,
 .our-story-page .supporters-title {
     font-size: 24px;
     font-weight: 800;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 30px;
     text-align: center;
 }
 .our-story-page .awards-section-title {
     font-size: 28px;
     font-weight: 800;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 40px;
     text-align: center;
 }
@@ -12008,7 +12009,7 @@ a.ui-button:active, .ui-button:active,
 .reach-presence-section .stat-counter-block .counter-val {
     font-size: 40px;
     font-weight: 800;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin-bottom: 5px;
     line-height: 1.1;
 }
@@ -12133,7 +12134,7 @@ a.ui-button:active, .ui-button:active,
 
 .reach-presence-section .details-panel h3 {
     font-size: 26px;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     font-weight: 700;
     margin-bottom: 12px;
 }
@@ -12192,7 +12193,7 @@ a.ui-button:active, .ui-button:active,
 }
 
 .reach-presence-section .state-accordion-section h2 {
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     font-size: 24px;
     font-weight: 700;
     margin-bottom: 30px;
@@ -12224,7 +12225,7 @@ a.ui-button:active, .ui-button:active,
 .reach-presence-section .accordion-header h3 {
     font-size: 16px;
     font-weight: 700;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     margin: 0;
 }
 
@@ -12287,7 +12288,7 @@ a.ui-button:active, .ui-button:active,
 .reach-presence-section .accordion-initiatives-title {
     font-size: 13px;
     text-transform: uppercase;
-    color: #2D1B69; /* brand purple */
+    color: #0f2246; /* brand purple */
     font-weight: 700;
     margin-bottom: 12px;
 }
@@ -12634,4 +12635,4 @@ a.ui-button:active, .ui-button:active,
     clip: rect(0, 0, 0, 0) !important;
     white-space: nowrap !important;
     border: 0 !important;
-}
+}

@@ -319,9 +319,7 @@ function utw_load_static_page($slug) {
     } elseif ($slug === 'reach-presence') {
         $seo_title = "Geographic Footprint & Reach - ASSRA NGO India";
         $seo_desc  = "See where ASSRA operates across India, including tribal villages in Jharkhand and urban education clusters in Delhi.";
-    } elseif ($slug === 'vision-mission') {
-        $seo_title = "Vision, Mission & Core Values | The Ethical Compass of ASSRA";
-        $seo_desc  = "Read about ASSRA's guiding vision of dignity, transparency, inclusivity, and sustainability for all vulnerable communities.";
+
     } elseif ($slug === 'contact') {
         $seo_title = "Contact ASSRA NGO | Volunteer, Support, or Enquire";
         $seo_desc  = "Get in touch with ASSRA NGO. Speak to our team about donations, corporate CSR sponsorships, or volunteering on the ground.";
@@ -1025,6 +1023,15 @@ add_filter('wp_nav_menu_objects', function ($sorted_menu_items, $args) {
     if ($args->theme_location !== 'main-menu') {
         return $sorted_menu_items;
     }
+
+    // Filter out Vision & Mission item if it exists in the WordPress menu
+    $sorted_menu_items = array_filter($sorted_menu_items, function ($item) {
+        return !(
+            strpos(strtolower($item->url), '/vision-mission') !== false || 
+            strtolower($item->title) === 'vision & mission' || 
+            strtolower($item->title) === 'vision and mission'
+        );
+    });
 
     $new_sorted = [];
     $our_work_inserted = false;
