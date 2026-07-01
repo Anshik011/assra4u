@@ -417,8 +417,8 @@ function utw_load_static_page($slug) {
     $html = preg_replace('/(href|src)=["\']\s*(\.{0,2}\/?)js\//',                     '$1="' . $theme_uri . '/assets/js/',     $html);
     $html = preg_replace('/(href|src|srcset|data-src)=["\']\s*(\.{0,2}\/?)images\//', '$1="' . $theme_uri . '/assets/images/', $html);
     $html = preg_replace('/(href|src)=["\']\s*(\.{0,2}\/?)assets\//',                 '$1="' . $theme_uri . '/assets/',        $html);
-    $html = preg_replace('/url\(\s*["\']?(\.{0,2}\/?)images\//',                      'url(' . $theme_uri . '/assets/images/', $html);
-    $html = preg_replace('/url\(\s*["\']?(\.{0,2}\/?)fonts\//',                       'url(' . $theme_uri . '/assets/fonts/',  $html);
+    $html = preg_replace('/url\(\s*(["\']?)(\.{0,2}\/?)images\//',                      'url($1' . $theme_uri . '/assets/images/', $html);
+    $html = preg_replace('/url\(\s*(["\']?)(\.{0,2}\/?)fonts\//',                       'url($1' . $theme_uri . '/assets/fonts/',  $html);
     $html = preg_replace('/href=["\']\/(?!\/)/',                                       'href="' . home_url('/'),                $html);
     $html = str_replace(['{theme_url}', '{site_url}'], [$theme_uri, site_url()], $html);
 
