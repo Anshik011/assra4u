@@ -765,19 +765,6 @@ function utw_universal_loop_handler($atts, $content = null) {
     if ($atts['type'] === 'gallery') {
         if (isset($_GET['gallery_year']) && !empty($_GET['gallery_year'])) {
             $filter_year = intval($_GET['gallery_year']);
-        } elseif (!empty($current_pillar)) {
-            $latest = $wpdb->get_var($wpdb->prepare("
-                SELECT pm.meta_value FROM {$wpdb->postmeta} pm
-                INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-                INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-                INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-                INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
-                WHERE pm.meta_key = 'gallery_year' AND p.post_status = 'publish' AND t.slug = %s
-                ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC LIMIT 1
-            ", $current_pillar));
-            if ($latest) {
-                $filter_year = intval($latest);
-            }
         }
     }
 
