@@ -384,13 +384,41 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         }
     }
 
-    // Set Event Year (postmeta: gallery_year)
-    if (isset($_POST['year'])) {
-        $year = intval($_POST['year']);
-        if ($year >= 1900 && $year <= 2100) {
-            update_post_meta($gallery_post_id, 'gallery_year', $year);
+    // Detect Event Year (EXIF -> Filename -> Fallback Input)
+    $detected_year = null;
+
+    // 1. Try EXIF
+    if (function_exists('exif_read_data')) {
+        $exif = @exif_read_data($file_path);
+        if (!empty($exif['DateTimeOriginal'])) {
+            if (preg_match('/^(19|20)\d{2}/', $exif['DateTimeOriginal'], $matches)) {
+                $detected_year = intval($matches[0]);
+            }
+        } elseif (!empty($exif['FileDateTime'])) {
+            $detected_year = intval(date('Y', $exif['FileDateTime']));
         }
     }
+
+    // 2. Try Filename
+    if (!$detected_year) {
+        $orig_name = $uploaded_file['name'];
+        if (preg_match('/(19|20)\d{2}/', $orig_name, $matches)) {
+            $detected_year = intval($matches[0]);
+        }
+    }
+
+    // 3. Fallback to input
+    if (!$detected_year && isset($_POST['year'])) {
+        $detected_year = intval($_POST['year']);
+    }
+
+    // Ensure valid range, fallback to current year
+    if (!$detected_year || $detected_year < 1900 || $detected_year > 2100) {
+        $detected_year = intval(date('Y'));
+    }
+
+    // Save Year to postmeta
+    update_post_meta($gallery_post_id, 'gallery_year', $detected_year);
 
     // Store AI-generated Tags (postmeta: gallery_tags)
     if (!empty($ai_data['tags']) && is_array($ai_data['tags'])) {
@@ -419,6 +447,7 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         'title'           => $ai_data['title'],
         'filename'        => $new_filename,
         'category'        => $assigned_category_name,
+        'year'            => $detected_year,
         'preview_url'     => wp_get_attachment_thumb_url($attachment_id),
     ));
 });

@@ -268,6 +268,7 @@ jQuery(document).ready(function($) {
                         const detailsHtml = `
                             <strong>Title:</strong> ${data.title}<br>
                             <strong>Category:</strong> ${data.category}<br>
+                            <strong>Event Year:</strong> ${data.year}<br>
                             <strong>SEO File:</strong> <span class="assra-row-details">${data.filename}</span>
                         `;
                         updateRowStatus(currentIndex, 'completed', detailsHtml);
