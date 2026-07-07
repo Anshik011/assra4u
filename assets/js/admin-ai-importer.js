@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-    let fileQueue = [];
+   let fileQueue = [];
     let isProcessing = false;
     let currentIndex = 0;
     let totalFiles = 0;

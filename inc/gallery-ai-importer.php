@@ -102,8 +102,8 @@ function assra_gallery_ai_import_page() {
                     </div>
                     <h4>Drag & Drop image files here</h4>
                     <p>or click to browse from your computer (Multiple files supported)</p>
-                    <input type="file" id="assra-file-input" multiple accept="image/*" style="display: none;">
                 </div>
+                <input type="file" id="assra-file-input" class="assra-hidden" multiple accept="image/*">
 
                 <!-- Progress Tracker -->
                 <div class="assra-progress-wrapper" id="assra-progress-wrapper">
