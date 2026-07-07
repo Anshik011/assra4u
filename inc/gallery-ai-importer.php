@@ -65,11 +65,26 @@ function assra_gallery_ai_import_page() {
             <div class="assra-importer-card">
                 <h3>Import Settings</h3>
                 
-                <!-- Gemini API Key -->
+                <?php
+                $provider = get_option('assra_api_provider', 'gemini');
+                ?>
+                <!-- API Provider -->
                 <div class="assra-form-group">
-                    <label for="assra-api-key">Gemini API Key</label>
-                    <input type="password" id="assra-api-key" value="<?php echo esc_attr($api_key); ?>" class="assra-form-input" placeholder="AI Studio API Key (AIZA...)">
-                    <p class="assra-form-helper">Get a free API key from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a>.</p>
+                    <label for="assra-api-provider">API Provider</label>
+                    <select id="assra-api-provider" class="assra-form-select">
+                        <option value="gemini" <?php selected($provider, 'gemini'); ?>>Gemini (Google AI Studio)</option>
+                        <option value="openrouter" <?php selected($provider, 'openrouter'); ?>>OpenRouter (Free Models)</option>
+                        <option value="groq" <?php selected($provider, 'groq'); ?>>Groq (Llama 3.2 Vision)</option>
+                    </select>
+                </div>
+
+                <!-- API Key(s) -->
+                <div class="assra-form-group">
+                    <label for="assra-api-key">API Key(s)</label>
+                    <textarea id="assra-api-key" class="assra-form-input" rows="3" placeholder="Paste API key(s) here. Separate multiple keys with commas." style="resize: vertical; font-family: monospace; font-size: 12px;"><?php echo esc_textarea($api_key); ?></textarea>
+                    <p class="assra-form-helper" id="assra-api-key-helper">
+                        Supports key rotation: enter multiple keys (e.g. key1, key2, key3) to bypass rate limits automatically.
+                    </p>
                 </div>
 
                 <!-- Program Category -->
@@ -171,7 +186,7 @@ function assra_gallery_ai_import_page() {
    3. AJAX ENDPOINTS
    ========================================================================== */
 
-// Callback to save API Key asynchronously
+// Callback to save API Key and Provider asynchronously
 add_action('wp_ajax_assra_save_gemini_key', function() {
     if (!current_user_can('manage_options')) {
         wp_send_json_error('Unauthorized capacity', 403);
@@ -179,8 +194,11 @@ add_action('wp_ajax_assra_save_gemini_key', function() {
     check_ajax_referer('assra_ai_import_nonce', 'security');
 
     $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
+    $provider = isset($_POST['provider']) ? sanitize_key($_POST['provider']) : 'gemini';
+
     update_option('assra_gemini_api_key', $api_key);
-    wp_send_json_success('API Key saved.');
+    update_option('assra_api_provider', $provider);
+    wp_send_json_success('API settings saved.');
 });
 
 // Main callback to process a single image in the batch
@@ -225,91 +243,12 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         ));
     }
 
-    // 2. Fetch API Key and Verify
-    $api_key = get_option('assra_gemini_api_key', '');
-    if (empty($api_key)) {
-        wp_send_json_error('Gemini API Key is not configured. Please configure it in settings.');
-    }
-
-    // 3. Call Gemini AI Vision API
-    $image_data = base64_encode(file_get_contents($file_path));
+    // 2. Call AI Vision API (handles Key Rotation & selected Provider)
     $mime_type = $uploaded_file['type'];
+    $ai_data = assra_call_ai_vision_api($file_path, $mime_type, $uploaded_file['name']);
 
-    $prompt = "Analyze this photograph for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words. Return the metadata in structured JSON format according to the schema.";
-
-    $request_body = array(
-        'contents' => array(
-            array(
-                'parts' => array(
-                    array(
-                        'text' => $prompt
-                    ),
-                    array(
-                        'inlineData' => array(
-                            'mimeType' => $mime_type,
-                            'data'     => $image_data
-                        )
-                    )
-                )
-            )
-        ),
-        'generationConfig' => array(
-            'responseMimeType' => 'application/json',
-            'responseSchema'   => array(
-                'type'       => 'OBJECT',
-                'properties' => array(
-                    'title'         => array('type' => 'STRING', 'description' => 'A descriptive, human-quality title suitable for the NGO gallery (e.g. "Underprivileged Children Receiving Remedial Education")'),
-                    'alt_text'      => array('type' => 'STRING', 'description' => 'SEO friendly descriptive alt text for accessibility'),
-                    'caption'       => array('type' => 'STRING', 'description' => 'Brief caption summarizing the scene'),
-                    'description'   => array('type' => 'STRING', 'description' => 'Detailed description of the activity/scene shown in the image'),
-                    'seo_filename'  => array('type' => 'STRING', 'description' => 'SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. "underprivileged-children-remedial-education")'),
-                    'auto_category' => array(
-                        'type'        => 'STRING',
-                        'description' => 'Classify the image into one of these category slugs based on visual context:
-- "education-work": School children, classrooms, tutoring, educational materials, teachers.
-- "elderly-care": Senior citizens, distribution of food or necessities to the aged, old age support.
-- "empowerment": Women, self-help groups, skill training (e.g. tailoring, sewing classes), women-centric initiatives.
-- "environment": Tree plantation, plantation drives, environmental cleanliness, green awareness campaigns.
-You must choose the closest matching slug from these four options.'
-                    ),
-                    'tags'          => array(
-                        'type'        => 'ARRAY',
-                        'items'       => array('type' => 'STRING'),
-                        'description' => 'List of relevant keywords'
-                    )
-                ),
-                'required' => array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'auto_category', 'tags')
-            )
-        )
-    );
-
-    // Call API using wp_remote_post
-    $response = wp_remote_post(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' . $api_key,
-        array(
-            'headers' => array('Content-Type' => 'application/json'),
-            'body'    => wp_json_encode($request_body),
-            'timeout' => 45
-        )
-    );
-
-    if (is_wp_error($response)) {
-        wp_send_json_error('Gemini API call failed: ' . $response->get_error_message());
-    }
-
-    $response_code = wp_remote_retrieve_response_code($response);
-    if ($response_code !== 200) {
-        wp_send_json_error('Gemini API error (Status ' . $response_code . '): ' . wp_remote_retrieve_body($response));
-    }
-
-    $body = json_decode(wp_remote_retrieve_body($response), true);
-    if (empty($body['candidates'][0]['content']['parts'][0]['text'])) {
-        wp_send_json_error('Invalid response content from Gemini API.');
-    }
-
-    $ai_data = json_decode($body['candidates'][0]['content']['parts'][0]['text'], true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        wp_send_json_error('Failed to parse Gemini metadata JSON: ' . json_last_error_msg());
+    if (is_wp_error($ai_data)) {
+        wp_send_json_error($ai_data->get_error_message());
     }
 
     // 4. Rename File to SEO Filename & sideload into Media Library
@@ -477,3 +416,277 @@ You must choose the closest matching slug from these four options.'
         'preview_url'     => wp_get_attachment_thumb_url($attachment_id),
     ));
 });
+
+/**
+ * Call the selected AI Vision API (handles Key Rotation & Fallback)
+ */
+function assra_call_ai_vision_api($file_path, $mime_type, $original_filename) {
+    $provider = get_option('assra_api_provider', 'gemini');
+    $api_keys_str = get_option('assra_gemini_api_key', '');
+
+    // Split keys by commas, semicolons, or newlines
+    $keys = preg_split('/[\s,;]+/', $api_keys_str);
+    $keys = array_filter(array_map('trim', $keys));
+
+    if (empty($keys)) {
+        return new WP_Error('missing_key', 'No API Key is configured. Please configure it in settings.');
+    }
+
+    $image_base64 = base64_encode(file_get_contents($file_path));
+    $last_error = '';
+
+    foreach ($keys as $key) {
+        $result = null;
+        if ($provider === 'gemini') {
+            $result = assra_call_gemini_api($key, $image_base64, $mime_type, $original_filename);
+        } elseif ($provider === 'openrouter') {
+            $result = assra_call_openrouter_api($key, $image_base64, $mime_type, $original_filename);
+        } elseif ($provider === 'groq') {
+            $result = assra_call_groq_api($key, $image_base64, $mime_type, $original_filename);
+        } else {
+            return new WP_Error('invalid_provider', 'Invalid API Provider selected.');
+        }
+
+        if (!is_wp_error($result)) {
+            // Success! Rotate the working key to the front of the list
+            $current_idx = array_search($key, $keys);
+            if ($current_idx > 0) {
+                unset($keys[$current_idx]);
+                array_unshift($keys, $key);
+                update_option('assra_gemini_api_key', implode(', ', $keys));
+            }
+            return $result;
+        }
+
+        $last_error = $result->get_error_message();
+    }
+
+    return new WP_Error('all_keys_failed', 'All API keys failed. Last error: ' . $last_error);
+}
+
+/**
+ * Call Gemini AI Vision API
+ */
+function assra_call_gemini_api($api_key, $image_data, $mime_type, $original_filename) {
+    $prompt = "Analyze this photograph for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words. Return the metadata in structured JSON format according to the schema.";
+
+    $request_body = array(
+        'contents' => array(
+            array(
+                'parts' => array(
+                    array('text' => $prompt),
+                    array(
+                        'inlineData' => array(
+                            'mimeType' => $mime_type,
+                            'data'     => $image_data
+                        )
+                    )
+                )
+            )
+        ),
+        'generationConfig' => array(
+            'responseMimeType' => 'application/json',
+            'responseSchema'   => array(
+                'type'       => 'OBJECT',
+                'properties' => array(
+                    'title'         => array('type' => 'STRING'),
+                    'alt_text'      => array('type' => 'STRING'),
+                    'caption'       => array('type' => 'STRING'),
+                    'description'   => array('type' => 'STRING'),
+                    'seo_filename'  => array('type' => 'STRING'),
+                    'auto_category' => array('type' => 'STRING'),
+                    'tags'          => array(
+                        'type'  => 'ARRAY',
+                        'items' => array('type' => 'STRING')
+                    )
+                ),
+                'required' => array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'auto_category', 'tags')
+            )
+        )
+    );
+
+    $response = wp_remote_post(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' . $api_key,
+        array(
+            'headers' => array('Content-Type' => 'application/json'),
+            'body'    => wp_json_encode($request_body),
+            'timeout' => 45
+        )
+    );
+
+    if (is_wp_error($response)) {
+        return $response;
+    }
+
+    $response_code = wp_remote_retrieve_response_code($response);
+    if ($response_code !== 200) {
+        $body_text = wp_remote_retrieve_body($response);
+        $err_parsed = json_decode($body_text, true);
+        $err_msg = !empty($err_parsed['error']['message']) ? $err_parsed['error']['message'] : $body_text;
+        return new WP_Error('gemini_api_error', 'Gemini API Error (Status ' . $response_code . '): ' . $err_msg);
+    }
+
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    if (empty($body['candidates'][0]['content']['parts'][0]['text'])) {
+        return new WP_Error('gemini_invalid_response', 'Invalid response format from Gemini API.');
+    }
+
+    $ai_data = json_decode($body['candidates'][0]['content']['parts'][0]['text'], true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return new WP_Error('gemini_json_parse', 'Failed to parse Gemini JSON: ' . json_last_error_msg());
+    }
+
+    return $ai_data;
+}
+
+/**
+ * Call OpenRouter AI Vision API (Supports Free Models)
+ */
+function assra_call_openrouter_api($api_key, $image_data, $mime_type, $original_filename) {
+    $prompt = "Analyze this photograph for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words.
+Return the metadata in structured JSON format according to this schema:
+{
+  \"title\": \"A descriptive, human-quality title suitable for the NGO gallery (e.g. 'Underprivileged Children Receiving Remedial Education')\",
+  \"alt_text\": \"SEO friendly descriptive alt text for accessibility\",
+  \"caption\": \"Brief caption summarizing the scene\",
+  \"description\": \"Detailed description of the activity/scene shown in the image\",
+  \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'underprivileged-children-remedial-education')\",
+  \"auto_category\": \"Classify the image into one of these category slugs based on visual context: 'education-work', 'elderly-care', 'empowerment', 'environment'. Choose the closest matching slug.\",
+  \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
+}";
+
+    $request_body = array(
+        'model' => 'google/gemini-2.5-flash:free',
+        'messages' => array(
+            array(
+                'role' => 'user',
+                'content' => array(
+                    array(
+                        'type' => 'text',
+                        'text' => $prompt
+                    ),
+                    array(
+                        'type' => 'image_url',
+                        'image_url' => array(
+                            'url' => 'data:' . $mime_type . ';base64,' . $image_data
+                        )
+                    )
+                )
+            )
+        ),
+        'response_format' => array('type' => 'json_object')
+    );
+
+    $response = wp_remote_post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        array(
+            'headers' => array(
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key
+            ),
+            'body'    => wp_json_encode($request_body),
+            'timeout' => 45
+        )
+    );
+
+    if (is_wp_error($response)) {
+        return $response;
+    }
+
+    $response_code = wp_remote_retrieve_response_code($response);
+    if ($response_code !== 200) {
+        $body_text = wp_remote_retrieve_body($response);
+        $err_parsed = json_decode($body_text, true);
+        $err_msg = !empty($err_parsed['error']['message']) ? $err_parsed['error']['message'] : $body_text;
+        return new WP_Error('openrouter_api_error', 'OpenRouter API Error (Status ' . $response_code . '): ' . $err_msg);
+    }
+
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    if (empty($body['choices'][0]['message']['content'])) {
+        return new WP_Error('openrouter_invalid_response', 'Invalid response format from OpenRouter API.');
+    }
+
+    $content = $body['choices'][0]['message']['content'];
+    $ai_data = json_decode($content, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return new WP_Error('openrouter_json_parse', 'Failed to parse OpenRouter JSON: ' . json_last_error_msg());
+    }
+
+    return $ai_data;
+}
+
+/**
+ * Call Groq AI Vision API (Supports Llama 3.2 Vision)
+ */
+function assra_call_groq_api($api_key, $image_data, $mime_type, $original_filename) {
+    $prompt = "Analyze this photograph for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words.
+Return the metadata in structured JSON format according to this schema:
+{
+  \"title\": \"A descriptive, human-quality title suitable for the NGO gallery (e.g. 'Underprivileged Children Receiving Remedial Education')\",
+  \"alt_text\": \"SEO friendly descriptive alt text for accessibility\",
+  \"caption\": \"Brief caption summarizing the scene\",
+  \"description\": \"Detailed description of the activity/scene shown in the image\",
+  \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'underprivileged-children-remedial-education')\",
+  \"auto_category\": \"Classify the image into one of these category slugs based on visual context: 'education-work', 'elderly-care', 'empowerment', 'environment'. Choose the closest matching slug.\",
+  \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
+}";
+
+    $request_body = array(
+        'model' => 'llama-3.2-11b-vision-preview',
+        'messages' => array(
+            array(
+                'role' => 'user',
+                'content' => array(
+                    array(
+                        'type' => 'text',
+                        'text' => $prompt
+                    ),
+                    array(
+                        'type' => 'image_url',
+                        'image_url' => array(
+                            'url' => 'data:' . $mime_type . ';base64,' . $image_data
+                        )
+                    )
+                )
+            )
+        ),
+        'response_format' => array('type' => 'json_object')
+    );
+
+    $response = wp_remote_post(
+        'https://api.groq.com/openai/v1/chat/completions',
+        array(
+            'headers' => array(
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key
+            ),
+            'body'    => wp_json_encode($request_body),
+            'timeout' => 45
+        )
+    );
+
+    if (is_wp_error($response)) {
+        return $response;
+    }
+
+    $response_code = wp_remote_retrieve_response_code($response);
+    if ($response_code !== 200) {
+        $body_text = wp_remote_retrieve_body($response);
+        $err_parsed = json_decode($body_text, true);
+        $err_msg = !empty($err_parsed['error']['message']) ? $err_parsed['error']['message'] : $body_text;
+        return new WP_Error('groq_api_error', 'Groq API Error (Status ' . $response_code . '): ' . $err_msg);
+    }
+
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    if (empty($body['choices'][0]['message']['content'])) {
+        return new WP_Error('groq_invalid_response', 'Invalid response format from Groq API.');
+    }
+
+    $content = $body['choices'][0]['message']['content'];
+    $ai_data = json_decode($content, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return new WP_Error('groq_json_parse', 'Failed to parse Groq JSON: ' . json_last_error_msg());
+    }
+
+    return $ai_data;
+}

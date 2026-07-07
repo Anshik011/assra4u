@@ -120,20 +120,21 @@ jQuery(document).ready(function($) {
     // 3. Control Buttons Event Handlers
     $startBtn.on('click', function() {
         const apiKey = $('#assra-api-key').val().trim();
+        const provider = $('#assra-api-provider').val();
         if (!apiKey) {
-            alert('Please enter your Gemini API Key in the settings before starting.');
+            alert('Please enter your API Key in the settings before starting.');
             $('#assra-api-key').focus();
             return;
         }
 
         // Save API key via ajax
-        saveApiKey(apiKey);
+        saveApiKey(apiKey, provider);
 
         isProcessing = true;
         $startBtn.prop('disabled', true);
         $pauseBtn.prop('disabled', false);
         $cancelBtn.prop('disabled', false);
-        $('#assra-api-key, #assra-category, #assra-year').prop('disabled', true);
+        $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', true);
 
         processNext();
     });
@@ -153,7 +154,7 @@ jQuery(document).ready(function($) {
         $retryBtn.prop('disabled', true);
         $pauseBtn.prop('disabled', false);
         $cancelBtn.prop('disabled', false);
-        $('#assra-api-key, #assra-category, #assra-year').prop('disabled', true);
+        $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', true);
 
         // Reset all failed items in the queue to pending
         fileQueue.forEach((fileObj, index) => {
@@ -191,7 +192,7 @@ jQuery(document).ready(function($) {
             $startBtn.prop('disabled', false).find('span').text('Start Import');
             $pauseBtn.prop('disabled', true);
             $cancelBtn.prop('disabled', true);
-            $('#assra-api-key, #assra-category, #assra-year').prop('disabled', false);
+            $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', false);
             updateStats();
         }
     });
@@ -211,7 +212,7 @@ jQuery(document).ready(function($) {
             alert('AI Bulk Import Completed!');
             $startBtn.prop('disabled', false).find('span').text('Start New Import');
             $pauseBtn.prop('disabled', true);
-            $('#assra-api-key, #assra-category, #assra-year').prop('disabled', false);
+            $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', false);
             checkButtons();
             return;
         }
@@ -370,11 +371,12 @@ jQuery(document).ready(function($) {
         }
     }
 
-    function saveApiKey(apiKey) {
+    function saveApiKey(apiKey, provider) {
         $.post(ajaxurl, {
             action: 'assra_save_gemini_key',
             security: assra_importer_nonce,
-            api_key: apiKey
+            api_key: apiKey,
+            provider: provider
         });
     }
 
