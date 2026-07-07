@@ -251,80 +251,90 @@ jQuery(document).ready(function($) {
         const $row = $(`#${rowId}`);
 
         // Update Row status
-        updateRowStatus(currentIndex, 'uploading', 'Uploading image...');
+        updateRowStatus(currentIndex, 'uploading', 'Compressing to WebP...');
 
-        // Build FormData
-        const formData = new FormData();
-        formData.append('action', 'assra_ai_import_single');
-        formData.append('security', assra_importer_nonce);
-        formData.append('image', fileObj.file);
-        formData.append('category', $('#assra-category').val());
-        formData.append('year', $('#assra-year').val());
-        formData.append('post_type', $('#assra-post-type').val());
-
-        // Perform AJAX Request
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: formData,
-            contentType: false,
-            processData: false,
-            xhr: function() {
-                const xhr = new window.XMLHttpRequest();
-                xhr.upload.addEventListener('progress', function(evt) {
-                    if (evt.lengthComputable) {
-                        const percentComplete = Math.round((evt.loaded / evt.total) * 100);
-                        if (percentComplete < 100) {
-                            $row.find('.assra-row-result').text(`Uploading: ${percentComplete}%`);
-                        } else {
-                            updateRowStatus(currentIndex, 'analyzing', 'AI is analyzing & generating SEO metadata...');
-                        }
-                    }
-                }, false);
-                return xhr;
-            },
-            success: function(response) {
-                if (response.success) {
-                    const data = response.data;
-                    if (data.skipped) {
-                        // Image is a duplicate
-                        fileObj.status = 'skipped';
-                        updateRowStatus(currentIndex, 'skipped', data.message);
-                        skippedCount++;
-                    } else {
-                        // Successfully imported
-                        fileObj.status = 'completed';
-                        fileObj.post_id = data.gallery_post_id;
-                        
-                        const detailsHtml = `
-                            <strong>Title:</strong> ${data.title}<br>
-                            <strong>Category:</strong> ${data.category}<br>
-                            <strong>Event Year:</strong> ${data.year}<br>
-                            <strong>SEO File:</strong> <span class="assra-row-details">${data.filename}</span>
-                        `;
-                        updateRowStatus(currentIndex, 'completed', detailsHtml);
-                        completedCount++;
-                    }
-                } else {
-                    // API/PHP processing error
-                    fileObj.status = 'failed';
-                    fileObj.error = response.data || 'Unknown error';
-                    updateRowStatus(currentIndex, 'failed', `<span class="assra-row-error">Error: ${fileObj.error}</span>`);
-                    failedCount++;
-                }
-
-                finalizeItemProgress();
-            },
-            error: function(xhr, status, error) {
-                // Connection or server error
-                fileObj.status = 'failed';
-                fileObj.error = error || 'Network connection failed';
-                updateRowStatus(currentIndex, 'failed', `<span class="assra-row-error">Network Error: ${fileObj.error}</span>`);
-                failedCount++;
-
-                finalizeItemProgress();
-            }
+        // Convert image to WebP client-side before uploading (faster upload, saves CPU)
+        convertToWebP(fileObj.file).then(function(webpFile) {
+            uploadSingleFile(webpFile);
+        }).catch(function(err) {
+            console.warn('WebP conversion failed, falling back to original file:', err);
+            uploadSingleFile(fileObj.file);
         });
+
+        function uploadSingleFile(fileToUpload) {
+            updateRowStatus(currentIndex, 'uploading', 'Uploading image...');
+
+            // Build FormData
+            const formData = new FormData();
+            formData.append('action', 'assra_ai_import_single');
+            formData.append('security', assra_importer_nonce);
+            formData.append('image', fileToUpload);
+            formData.append('category', $('#assra-category').val());
+            formData.append('year', $('#assra-year').val());
+            formData.append('post_type', $('#assra-post-type').val());
+
+            // Perform AJAX Request
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(evt) {
+                        if (evt.lengthComputable) {
+                            const percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                            if (percentComplete < 100) {
+                                $row.find('.assra-row-result').text(`Uploading: ${percentComplete}%`);
+                            } else {
+                                updateRowStatus(currentIndex, 'analyzing', 'AI is analyzing & generating SEO metadata...');
+                            }
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        if (data.skipped) {
+                            fileObj.status = 'skipped';
+                            updateRowStatus(currentIndex, 'skipped', `<span class="assra-row-skipped">${data.message}</span>`);
+                            skippedCount++;
+                        } else {
+                            fileObj.status = 'completed';
+                            fileObj.post_id = data.gallery_post_id;
+                            
+                            const detailsHtml = `
+                                <strong>Title:</strong> ${data.title}<br>
+                                <strong>Category:</strong> ${data.category}<br>
+                                <strong>Event Year:</strong> ${data.year}<br>
+                                <strong>SEO File:</strong> <span class="assra-row-details">${data.filename}</span>
+                            `;
+                            updateRowStatus(currentIndex, 'completed', detailsHtml);
+                            completedCount++;
+                        }
+                    } else {
+                        // API/PHP processing error
+                        fileObj.status = 'failed';
+                        fileObj.error = response.data || 'Unknown error';
+                        updateRowStatus(currentIndex, 'failed', `<span class="assra-row-error">Error: ${fileObj.error}</span>`);
+                        failedCount++;
+                    }
+
+                    finalizeItemProgress();
+                },
+                error: function(xhr, status, error) {
+                    // Connection or server error
+                    fileObj.status = 'failed';
+                    fileObj.error = error || 'Network connection failed';
+                    updateRowStatus(currentIndex, 'failed', `<span class="assra-row-error">Network Error: ${fileObj.error}</span>`);
+                    failedCount++;
+
+                    finalizeItemProgress();
+                }
+            });
+        }
     }
 
     function finalizeItemProgress() {
@@ -412,6 +422,63 @@ jQuery(document).ready(function($) {
 
     function capitalize(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    function convertToWebP(file) {
+        return new Promise((resolve, reject) => {
+            // Check if WebP canvas conversion is supported
+            const testCanvas = document.createElement('canvas');
+            if (!testCanvas.toDataURL || testCanvas.toDataURL('image/webp').indexOf('data:image/webp') !== 0) {
+                return reject(new Error('WebP canvas encoding not supported by browser.'));
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth || img.width;
+                        canvas.height = img.naturalHeight || img.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Draw solid white background (preserves transparency in PNGs as white instead of black)
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        ctx.drawImage(img, 0, 0);
+                        
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                return reject(new Error('Canvas toBlob failed.'));
+                            }
+                            
+                            // Generate .webp filename
+                            const originalName = file.name;
+                            const baseName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+                            const webpName = baseName + '.webp';
+                            
+                            const webpFile = new File([blob], webpName, {
+                                type: 'image/webp',
+                                lastModified: Date.now()
+                            });
+                            
+                            resolve(webpFile);
+                        }, 'image/webp', 0.82); // 82% WebP quality (highly optimized file size)
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                img.onerror = function() {
+                    reject(new Error('Failed to load image element.'));
+                };
+                img.src = e.target.result;
+            };
+            reader.onerror = function() {
+                reject(new Error('Failed to read file.'));
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
     // Category visibility toggler based on destination CPT
