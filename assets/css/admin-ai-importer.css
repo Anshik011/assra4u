@@ -1,0 +1,343 @@
+/* ==========================================================================
+   ASSRA AI BULK GALLERY IMPORTER DASHBOARD STYLES
+   ========================================================================== */
+
+.assra-importer-container {
+    max-width: 1200px;
+    margin: 20px 20px 20px 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #2c3338;
+}
+
+/* 1. Header Card */
+.assra-importer-header {
+    background: #0f2246;
+    color: #ffffff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(15, 34, 70, 0.15);
+}
+
+.assra-importer-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.assra-importer-header h1 i {
+    color: #28a745;
+}
+
+.assra-importer-header p {
+    font-size: 15px;
+    color: #cbd5e0;
+    margin: 0;
+    line-height: 1.6;
+    max-width: 800px;
+}
+
+/* 2. Grid Layout */
+.assra-importer-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 960px) {
+    .assra-importer-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 3. Settings Card */
+.assra-importer-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    height: fit-content;
+}
+
+.assra-importer-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f2246;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.assra-form-group {
+    margin-bottom: 20px;
+}
+
+.assra-form-group label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #4a5568;
+    margin-bottom: 8px;
+}
+
+.assra-form-input, .assra-form-select {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    background-color: #f7fafc;
+    color: #2c3338;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.assra-form-input:focus, .assra-form-select:focus {
+    border-color: #28a745;
+    background-color: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+}
+
+.assra-form-helper {
+    font-size: 12px;
+    color: #718096;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* 4. Drag & Drop Upload Zone */
+.assra-dropzone {
+    border: 2px dashed #cbd5e0;
+    border-radius: 12px;
+    background: #f7fafc;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 24px;
+}
+
+.assra-dropzone:hover, .assra-dropzone.dragover {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.02);
+}
+
+.assra-dropzone-icon {
+    font-size: 40px;
+    color: #a0aec0;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.assra-dropzone:hover .assra-dropzone-icon, .assra-dropzone.dragover .assra-dropzone-icon {
+    color: #28a745;
+    transform: translateY(-4px);
+}
+
+.assra-dropzone h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #0f2246;
+}
+
+.assra-dropzone p {
+    font-size: 13px;
+    color: #718096;
+    margin: 0;
+}
+
+/* 5. Progress Indicators */
+.assra-progress-wrapper {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: none;
+}
+
+.assra-progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f2246;
+    margin-bottom: 10px;
+}
+
+.assra-progress-bar-bg {
+    background: #edf2f7;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.assra-progress-bar-fill {
+    background: linear-gradient(90deg, #28a745 0%, #208738 100%);
+    height: 100%;
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
+.assra-progress-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    color: #4a5568;
+}
+
+.assra-progress-stat span {
+    font-weight: 700;
+    color: #0f2246;
+}
+
+/* 6. Dashboard Controls */
+.assra-btn-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.assra-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.assra-btn-primary {
+    background: #28a745;
+    color: #ffffff;
+}
+
+.assra-btn-primary:hover {
+    background: #208738;
+}
+
+.assra-btn-secondary {
+    background: #edf2f7;
+    color: #4a5568;
+    border-color: #cbd5e0;
+}
+
+.assra-btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+.assra-btn-danger {
+    background: #fff5f5;
+    color: #e53e3e;
+    border-color: #fed7d7;
+}
+
+.assra-btn-danger:hover {
+    background: #e53e3e;
+    color: #ffffff;
+    border-color: #e53e3e;
+}
+
+.assra-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 7. Queue Grid & Rows */
+.assra-queue-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.assra-queue-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.assra-queue-table th {
+    background: #edf2f7;
+    padding: 14px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #4a5568;
+    text-align: left;
+    border-bottom: 1px solid #cbd5e0;
+}
+
+.assra-queue-table td {
+    padding: 14px 18px;
+    font-size: 13.5px;
+    border-bottom: 1px solid #edf2f7;
+    vertical-align: middle;
+}
+
+.assra-queue-table tr:last-child td {
+    border-bottom: none;
+}
+
+.assra-thumb-preview {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #edf2f7;
+    border: 1px solid #cbd5e0;
+}
+
+/* Status Badges */
+.assra-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.assra-status-pending { background: #edf2f7; color: #4a5568; }
+.assra-status-uploading { background: #ebf8ff; color: #2b6cb0; }
+.assra-status-analyzing { background: #feebc8; color: #c05621; }
+.assra-status-importing { background: #e2f9e9; color: #276749; }
+.assra-status-completed { background: #c6f6d5; color: #22543d; }
+.assra-status-failed { background: #fed7d7; color: #9b2c2c; }
+.assra-status-skipped { background: #edf2f7; color: #4a5568; text-decoration: line-through; }
+
+.assra-row-details {
+    font-size: 12px;
+    color: #718096;
+    margin-top: 4px;
+}
+
+.assra-row-error {
+    color: #e53e3e;
+    font-weight: 600;
+}
+
+.assra-no-files {
+    padding: 40px 20px;
+    text-align: center;
+    color: #a0aec0;
+}
+
+.assra-no-files i {
+    font-size: 32px;
+    margin-bottom: 10px;
+    display: block;
+}

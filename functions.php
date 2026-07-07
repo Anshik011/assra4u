@@ -30,6 +30,8 @@ REQUIRED — add to wp-config.php before "stop editing":
 =====================================================
 */
 
+require_once get_stylesheet_directory() . '/inc/gallery-ai-importer.php';
+
 /* ==============================
    1. THEME SETUP
 ==============================*/
