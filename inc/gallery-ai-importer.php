@@ -405,11 +405,19 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         $assigned_category_name = 'Media Coverage';
     }
 
-    // Detect Event Year (EXIF -> Filename -> Fallback Input)
+    // Detect Event Year (AI Visual -> EXIF -> Filename -> Fallback Input)
     $detected_year = null;
 
-    // 1. Try EXIF
-    if (function_exists('exif_read_data')) {
+    // 1. Try AI Visually Detected Year
+    if (!empty($ai_data['detected_year'])) {
+        $ai_year = intval($ai_data['detected_year']);
+        if ($ai_year >= 1900 && $ai_year <= 2100) {
+            $detected_year = $ai_year;
+        }
+    }
+
+    // 2. Try EXIF
+    if (!$detected_year && function_exists('exif_read_data')) {
         $exif = @exif_read_data($file_path);
         if (!empty($exif['DateTimeOriginal'])) {
             if (preg_match('/^(19|20)\d{2}/', $exif['DateTimeOriginal'], $matches)) {
@@ -420,7 +428,7 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         }
     }
 
-    // 2. Try Filename
+    // 3. Try Filename
     if (!$detected_year) {
         $orig_name = $uploaded_file['name'];
         if (preg_match('/(19|20)\d{2}/', $orig_name, $matches)) {
@@ -428,7 +436,7 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         }
     }
 
-    // 3. Fallback to input
+    // 4. Fallback to input
     if (!$detected_year && isset($_POST['year'])) {
         $detected_year = intval($_POST['year']);
     }
@@ -542,7 +550,7 @@ function assra_call_ai_vision_api($file_path, $mime_type, $original_filename) {
  * Call Gemini AI Vision API
  */
 function assra_call_gemini_api($api_key, $image_data, $mime_type, $original_filename) {
-    $prompt = "Analyze this photograph for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words. Return the metadata in structured JSON format according to the schema.";
+    $prompt = "Analyze this photograph for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words. Return the metadata in structured JSON format according to the schema. For detected_year, try to visually inspect the photograph for any signs of the event year (e.g. banners, signs, posters, t-shirts, calendars). If no year is visually identifiable, return 0.";
 
     $request_body = array(
         'contents' => array(
@@ -569,12 +577,13 @@ function assra_call_gemini_api($api_key, $image_data, $mime_type, $original_file
                     'description'   => array('type' => 'STRING'),
                     'seo_filename'  => array('type' => 'STRING'),
                     'auto_category' => array('type' => 'STRING'),
+                    'detected_year' => array('type' => 'INTEGER'),
                     'tags'          => array(
                         'type'  => 'ARRAY',
                         'items' => array('type' => 'STRING')
                     )
                 ),
-                'required' => array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'auto_category', 'tags')
+                'required' => array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'auto_category', 'detected_year', 'tags')
             )
         )
     );
@@ -626,6 +635,7 @@ Return the metadata in structured JSON format according to this schema:
   \"description\": \"Detailed description of the activity/scene shown in the image\",
   \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'underprivileged-children-remedial-education')\",
   \"auto_category\": \"Classify the image into one of these category slugs based on visual context: 'education-work', 'elderly-care', 'empowerment', 'environment'. Choose the closest matching slug.\",
+  \"detected_year\": 2024, // Try to visually inspect the photograph for any signs of the event year (e.g. banners, signs, posters, t-shirts, calendars). If no year is visually identifiable, return 0.
   \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
 }";
 
@@ -702,6 +712,7 @@ Return the metadata in structured JSON format according to this schema:
   \"description\": \"Detailed description of the activity/scene shown in the image\",
   \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'underprivileged-children-remedial-education')\",
   \"auto_category\": \"Classify the image into one of these category slugs based on visual context: 'education-work', 'elderly-care', 'empowerment', 'environment'. Choose the closest matching slug.\",
+  \"detected_year\": 2024, // Try to visually inspect the photograph for any signs of the event year (e.g. banners, signs, posters, t-shirts, calendars). If no year is visually identifiable, return 0.
   \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
 }";
 
