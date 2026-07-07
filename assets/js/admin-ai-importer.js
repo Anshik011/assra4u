@@ -26,6 +26,35 @@ jQuery(document).ready(function($) {
 
     $retryBtn.hide();
 
+    // Active Provider Cache
+    let activeProvider = $('#assra-api-provider').val();
+
+    // Provider Change Event Handler
+    $('#assra-api-provider').on('change', function() {
+        const newProvider = $(this).val();
+        // Save current key to cache
+        assra_stored_keys[activeProvider] = $('#assra-api-key').val().trim();
+        // Load key for new provider
+        $('#assra-api-key').val(assra_stored_keys[newProvider] || '');
+        activeProvider = newProvider;
+
+        // Update helper text
+        let helperText = 'Supports key rotation: enter multiple keys (e.g. key1, key2, key3) to bypass rate limits automatically.';
+        if (newProvider === 'gemini') {
+            helperText = 'Get a free API key from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a>. ' + helperText;
+        } else if (newProvider === 'openrouter') {
+            helperText = 'Get a free API key from <a href="https://openrouter.ai/" target="_blank">OpenRouter</a>. ' + helperText;
+        } else if (newProvider === 'groq') {
+            helperText = 'Get a free API key from <a href="https://console.groq.com/" target="_blank">Groq Console</a>. ' + helperText;
+        }
+        $('#assra-api-key-helper').html(helperText);
+    });
+
+    // Save key to cache on typing
+    $('#assra-api-key').on('input', function() {
+        assra_stored_keys[activeProvider] = $(this).val().trim();
+    });
+
     // 1. Drag & Drop Event Handlers
     $dropzone.on('click', function() {
         if (!isProcessing) {

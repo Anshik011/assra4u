@@ -46,13 +46,34 @@ add_action('admin_enqueue_scripts', function ($hook) {
 
 function assra_gallery_ai_import_page() {
     // Get stored credentials and taxonomy terms
-    $api_key = get_option('assra_gemini_api_key', '');
+    $provider = get_option('assra_api_provider', 'gemini');
+    $gemini_key = get_option('assra_gemini_api_key', '');
+    $openrouter_key = get_option('assra_openrouter_api_key', '');
+    $groq_key = get_option('assra_groq_api_key', '');
+
+    // Set initial text area key based on provider
+    $active_key = '';
+    if ($provider === 'gemini') {
+        $active_key = $gemini_key;
+    } elseif ($provider === 'openrouter') {
+        $active_key = $openrouter_key;
+    } elseif ($provider === 'groq') {
+        $active_key = $groq_key;
+    }
+
     $categories = get_terms(array(
         'taxonomy'   => 'assra_program',
         'hide_empty' => false,
     ));
     $current_year = date('Y');
     ?>
+    <script>
+    var assra_stored_keys = {
+        gemini: <?php echo wp_json_encode($gemini_key); ?>,
+        openrouter: <?php echo wp_json_encode($openrouter_key); ?>,
+        groq: <?php echo wp_json_encode($groq_key); ?>
+    };
+    </script>
     <div class="wrap assra-importer-container">
         <!-- Header -->
         <div class="assra-importer-header">
@@ -81,7 +102,7 @@ function assra_gallery_ai_import_page() {
                 <!-- API Key(s) -->
                 <div class="assra-form-group">
                     <label for="assra-api-key">API Key(s)</label>
-                    <textarea id="assra-api-key" class="assra-form-input" rows="3" placeholder="Paste API key(s) here. Separate multiple keys with commas." style="resize: vertical; font-family: monospace; font-size: 12px;"><?php echo esc_textarea($api_key); ?></textarea>
+                    <textarea id="assra-api-key" class="assra-form-input" rows="3" placeholder="Paste API key(s) here. Separate multiple keys with commas." style="resize: vertical; font-family: monospace; font-size: 12px;"><?php echo esc_textarea($active_key); ?></textarea>
                     <p class="assra-form-helper" id="assra-api-key-helper">
                         Supports key rotation: enter multiple keys (e.g. key1, key2, key3) to bypass rate limits automatically.
                     </p>
@@ -196,8 +217,15 @@ add_action('wp_ajax_assra_save_gemini_key', function() {
     $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
     $provider = isset($_POST['provider']) ? sanitize_key($_POST['provider']) : 'gemini';
 
-    update_option('assra_gemini_api_key', $api_key);
     update_option('assra_api_provider', $provider);
+    if ($provider === 'gemini') {
+        update_option('assra_gemini_api_key', $api_key);
+    } elseif ($provider === 'openrouter') {
+        update_option('assra_openrouter_api_key', $api_key);
+    } elseif ($provider === 'groq') {
+        update_option('assra_groq_api_key', $api_key);
+    }
+    
     wp_send_json_success('API settings saved.');
 });
 
@@ -430,14 +458,23 @@ add_action('wp_ajax_assra_ai_import_single', function() {
  */
 function assra_call_ai_vision_api($file_path, $mime_type, $original_filename) {
     $provider = get_option('assra_api_provider', 'gemini');
-    $api_keys_str = get_option('assra_gemini_api_key', '');
+    
+    // Retrieve the correct key based on active provider
+    $api_keys_str = '';
+    if ($provider === 'gemini') {
+        $api_keys_str = get_option('assra_gemini_api_key', '');
+    } elseif ($provider === 'openrouter') {
+        $api_keys_str = get_option('assra_openrouter_api_key', '');
+    } elseif ($provider === 'groq') {
+        $api_keys_str = get_option('assra_groq_api_key', '');
+    }
 
     // Split keys by commas, semicolons, or newlines
     $keys = preg_split('/[\s,;]+/', $api_keys_str);
     $keys = array_filter(array_map('trim', $keys));
 
     if (empty($keys)) {
-        return new WP_Error('missing_key', 'No API Key is configured. Please configure it in settings.');
+        return new WP_Error('missing_key', 'No API Key is configured for the selected provider. Please configure it in settings.');
     }
 
     $image_base64 = base64_encode(file_get_contents($file_path));
@@ -461,7 +498,8 @@ function assra_call_ai_vision_api($file_path, $mime_type, $original_filename) {
             if ($current_idx > 0) {
                 unset($keys[$current_idx]);
                 array_unshift($keys, $key);
-                update_option('assra_gemini_api_key', implode(', ', $keys));
+                $option_name = 'assra_' . $provider . '_api_key';
+                update_option($option_name, implode(', ', $keys));
             }
             return $result;
         }
@@ -640,7 +678,7 @@ Return the metadata in structured JSON format according to this schema:
 }";
 
     $request_body = array(
-        'model' => 'llama-3.2-11b-vision-preview',
+        'model' => 'llama-3.2-11b-vision-instruct',
         'messages' => array(
             array(
                 'role' => 'user',
