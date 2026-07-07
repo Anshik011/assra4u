@@ -265,7 +265,12 @@ add_action('wp_ajax_assra_ai_import_single', function() {
                     'seo_filename'  => array('type' => 'STRING', 'description' => 'SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. "underprivileged-children-remedial-education")'),
                     'auto_category' => array(
                         'type'        => 'STRING',
-                        'description' => 'Choose the most appropriate category slug for this image from: "education-work", "elderly-care", "empowerment", "environment". If the image does not fit any of these, return an empty string.'
+                        'description' => 'Classify the image into one of these category slugs based on visual context:
+- "education-work": School children, classrooms, tutoring, educational materials, teachers.
+- "elderly-care": Senior citizens, distribution of food or necessities to the aged, old age support.
+- "empowerment": Women, self-help groups, skill training (e.g. tailoring, sewing classes), women-centric initiatives.
+- "environment": Tree plantation, plantation drives, environmental cleanliness, green awareness campaigns.
+You must choose the closest matching slug from these four options.'
                     ),
                     'tags'          => array(
                         'type'        => 'ARRAY',
@@ -375,6 +380,27 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         $category_slug = sanitize_key($_POST['category']);
     } elseif (!empty($ai_data['auto_category'])) {
         $category_slug = sanitize_key($ai_data['auto_category']);
+    }
+
+    // Get list of valid active category slugs from the database
+    $valid_slugs = array();
+    $categories = get_terms(array(
+        'taxonomy'   => 'assra_program',
+        'hide_empty' => false,
+    ));
+    if (!is_wp_error($categories) && !empty($categories)) {
+        foreach ($categories as $cat) {
+            $valid_slugs[] = $cat->slug;
+        }
+    }
+
+    // Enforce fallback if empty or not in valid slugs list (prevent "General" or uncategorized posts)
+    if (empty($category_slug) || !in_array($category_slug, $valid_slugs)) {
+        if (!empty($valid_slugs)) {
+            $category_slug = $valid_slugs[0]; // Fallback to first active category term
+        } else {
+            $category_slug = '';
+        }
     }
 
     if (!empty($category_slug)) {
