@@ -251,16 +251,24 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         wp_send_json_error($ai_data->get_error_message());
     }
 
-    // 4. Rename File to SEO Filename & sideload into Media Library
+    // 4. Rename & Convert File to JPEG & sideload into Media Library
     $seo_slug = sanitize_title($ai_data['seo_filename']);
-    $orig_ext = pathinfo($uploaded_file['name'], PATHINFO_EXTENSION);
-    $new_filename = $seo_slug . '.' . strtolower($orig_ext);
+    $new_filename = $seo_slug . '.jpg';
 
     $tmp_dir = get_temp_dir();
     $renamed_temp_path = $tmp_dir . '/' . $new_filename;
 
-    if (!copy($file_path, $renamed_temp_path)) {
-        wp_send_json_error('Failed to prepare renamed temp file on disk.');
+    // Convert to JPEG format
+    $converted = assra_convert_to_jpeg($file_path, $renamed_temp_path);
+
+    // Fallback if conversion fails (e.g., format not supported by PHP GD)
+    if (!$converted) {
+        $orig_ext = pathinfo($uploaded_file['name'], PATHINFO_EXTENSION);
+        $new_filename = $seo_slug . '.' . strtolower($orig_ext);
+        $renamed_temp_path = $tmp_dir . '/' . $new_filename;
+        if (!copy($file_path, $renamed_temp_path)) {
+            wp_send_json_error('Failed to prepare renamed temp file on disk.');
+        }
     }
 
     // Required files for programmatic sideloading
@@ -689,4 +697,68 @@ Return the metadata in structured JSON format according to this schema:
     }
 
     return $ai_data;
+}
+
+/**
+ * Convert an image file to JPEG format using PHP GD
+ */
+function assra_convert_to_jpeg($source_file, $dest_file) {
+    if (!function_exists('gd_info')) {
+        return false; // GD extension is not enabled
+    }
+
+    $info = @getimagesize($source_file);
+    if (empty($info)) {
+        return false;
+    }
+
+    $mime = $info['mime'];
+    $image = null;
+
+    switch ($mime) {
+        case 'image/jpeg':
+            $image = @imagecreatefromjpeg($source_file);
+            break;
+        case 'image/png':
+            $image = @imagecreatefrompng($source_file);
+            break;
+        case 'image/gif':
+            $image = @imagecreatefromgif($source_file);
+            break;
+        case 'image/webp':
+            if (function_exists('imagecreatefromwebp')) {
+                $image = @imagecreatefromwebp($source_file);
+            }
+            break;
+    }
+
+    if (!$image) {
+        return false;
+    }
+
+    $width = imagesx($image);
+    $height = imagesy($image);
+
+    // Create new truecolor image canvas
+    $canvas = @imagecreatetruecolor($width, $height);
+    if (!$canvas) {
+        imagedestroy($image);
+        return false;
+    }
+
+    // Allocate white background (for transparency handling in PNGs/WebPs)
+    $white = imagecolorallocate($canvas, 255, 255, 255);
+    imagefill($canvas, 0, 0, $white);
+
+    // Copy original image onto canvas
+    imagecopy($canvas, $image, 0, 0, 0, 0, $width, $height);
+
+    // Save as JPEG with 85% compression quality
+    $success = @imagejpeg($canvas, $dest_file, 85);
+
+    // Clean up memory
+    imagedestroy($image);
+    imagedestroy($canvas);
+
+    return $success;
 }
