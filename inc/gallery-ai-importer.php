@@ -280,7 +280,7 @@ add_action('wp_ajax_assra_ai_import_single', function() {
 
     // Call API using wp_remote_post
     $response = wp_remote_post(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $api_key,
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $api_key,
         array(
             'headers' => array('Content-Type' => 'application/json'),
             'body'    => wp_json_encode($request_body),
