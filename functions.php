@@ -517,24 +517,41 @@ add_shortcode('gallery_filter_bar', function () {
         set_transient('assra_menu_programs', $programs, 12 * HOUR_IN_SECONDS);
     }
 
-    // Performance Optimization: Cache heavy unindexed CAST sorting lookup query
-    $years = get_transient('assra_gallery_years_all');
+    // Fetch years that have posts under the currently selected program (if selected)
+    $years_cache_key = 'assra_gallery_years_' . ($current_program ? md5($current_program) : 'all');
+    $years = get_transient($years_cache_key);
+
     if (false === $years) {
-        $years = $wpdb->get_col("
-            SELECT DISTINCT pm.meta_value 
-            FROM {$wpdb->postmeta} pm
-            INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-            WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
-            AND p.post_type = 'gallery' AND p.post_status = 'publish'
-            ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC
-        ");
-        set_transient('assra_gallery_years_all', $years, 12 * HOUR_IN_SECONDS);
+        if ($current_program) {
+            $years = $wpdb->get_col($wpdb->prepare("
+                SELECT DISTINCT pm.meta_value 
+                FROM {$wpdb->postmeta} pm
+                INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+                INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+                WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
+                AND p.post_type = 'gallery' AND p.post_status = 'publish'
+                AND t.slug = %s AND tt.taxonomy = 'assra_program'
+                ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC
+            ", $current_program));
+        } else {
+            $years = $wpdb->get_col("
+                SELECT DISTINCT pm.meta_value 
+                FROM {$wpdb->postmeta} pm
+                INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                WHERE pm.meta_key = 'gallery_year' AND pm.meta_value != ''
+                AND p.post_type = 'gallery' AND p.post_status = 'publish'
+                ORDER BY CAST(pm.meta_value AS UNSIGNED) DESC
+            ");
+        }
+        set_transient($years_cache_key, $years, 12 * HOUR_IN_SECONDS);
     }
 
     ob_start();
     ?>
     <div class="gallery-filters-wrapper">
-        <form method="get" action="<?php echo esc_url(home_url('/gallery/')); ?>" class="gallery-filter-form">
+        <form method="get" action="<?php echo esc_url(get_permalink()); ?>" class="gallery-filter-form">
             <div class="filter-row">
                 <!-- Program Pillars -->
                 <div class="filter-group pillar-group">
@@ -548,9 +565,6 @@ add_shortcode('gallery_filter_bar', function () {
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <?php if (!empty($current_year)) : ?>
-                            <input type="hidden" name="gallery_year" value="<?php echo esc_attr($current_year); ?>">
-                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -566,16 +580,13 @@ add_shortcode('gallery_filter_bar', function () {
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <?php if (!empty($current_program)) : ?>
-                            <input type="hidden" name="program" value="<?php echo esc_attr($current_program); ?>">
-                        <?php endif; ?>
                     </div>
                 </div>
                 
                 <!-- Reset Button -->
                 <?php if (!empty($current_program) || !empty($current_year)) : ?>
                     <div class="filter-group reset-group">
-                        <a href="<?php echo esc_url(home_url('/gallery/')); ?>" class="reset-filter-btn">
+                        <a href="<?php echo esc_url(get_permalink()); ?>" class="reset-filter-btn">
                             <span class="fa fa-times"></span> Clear Filters
                         </a>
                     </div>
