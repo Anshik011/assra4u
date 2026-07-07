@@ -237,6 +237,7 @@ jQuery(document).ready(function($) {
                         
                         const detailsHtml = `
                             <strong>Title:</strong> ${data.title}<br>
+                            <strong>Category:</strong> ${data.category}<br>
                             <strong>SEO File:</strong> <span class="assra-row-details">${data.filename}</span>
                         `;
                         updateRowStatus(currentIndex, 'completed', detailsHtml);
@@ -271,7 +272,8 @@ jQuery(document).ready(function($) {
         updateStats();
         
         // Recurse to next item in queue
-        setTimeout(processNext, 500);
+        // A 4000ms delay helps avoid hitting Gemini API free tier rate limits (15 RPM)
+        setTimeout(processNext, 4000);
     }
 
     // 5. Helper Functions

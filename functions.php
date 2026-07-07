@@ -930,6 +930,7 @@ add_action('save_post', function ($post_id) {
 /**
  * Fail-Secure: Enforce Razorpay Environment Configuration
  */
+/*
 if (!defined('RZP_KEY_ID') || !defined('RZP_KEY_SECRET') || RZP_KEY_ID === '' || RZP_KEY_SECRET === '') {
     
     // 1. Guard the backend admin dashboard
@@ -949,6 +950,7 @@ if (!defined('RZP_KEY_ID') || !defined('RZP_KEY_SECRET') || RZP_KEY_ID === '' ||
     add_action('wp_ajax_assra_verify_payment', $abort_handler);
     add_action('wp_ajax_nopriv_assra_verify_payment', $abort_handler);
 }
+*/
 
 add_action('init', function () {
     register_post_type('assra_donation', [

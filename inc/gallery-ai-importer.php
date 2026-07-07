@@ -76,6 +76,7 @@ function assra_gallery_ai_import_page() {
                 <div class="assra-form-group">
                     <label for="assra-category">Default Category (Pillar)</label>
                     <select id="assra-category" class="assra-form-select">
+                        <option value="auto_detect" selected>Auto-detect Category (Using AI)</option>
                         <option value="">-- No Category --</option>
                         <?php if (!is_wp_error($categories) && !empty($categories)) : ?>
                             <?php foreach ($categories as $cat) : ?>
@@ -254,18 +255,22 @@ add_action('wp_ajax_assra_ai_import_single', function() {
             'responseSchema'   => array(
                 'type'       => 'OBJECT',
                 'properties' => array(
-                    'title'        => array('type' => 'STRING', 'description' => 'A descriptive, human-quality title suitable for the NGO gallery (e.g. "Underprivileged Children Receiving Remedial Education")'),
-                    'alt_text'     => array('type' => 'STRING', 'description' => 'SEO friendly descriptive alt text for accessibility'),
-                    'caption'      => array('type' => 'STRING', 'description' => 'Brief caption summarizing the scene'),
-                    'description'  => array('type' => 'STRING', 'description' => 'Detailed description of the activity/scene shown in the image'),
-                    'seo_filename' => array('type' => 'STRING', 'description' => 'SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. "underprivileged-children-remedial-education")'),
-                    'tags'         => array(
-                        'type'  => 'ARRAY',
-                        'items' => array('type' => 'STRING'),
+                    'title'         => array('type' => 'STRING', 'description' => 'A descriptive, human-quality title suitable for the NGO gallery (e.g. "Underprivileged Children Receiving Remedial Education")'),
+                    'alt_text'      => array('type' => 'STRING', 'description' => 'SEO friendly descriptive alt text for accessibility'),
+                    'caption'       => array('type' => 'STRING', 'description' => 'Brief caption summarizing the scene'),
+                    'description'   => array('type' => 'STRING', 'description' => 'Detailed description of the activity/scene shown in the image'),
+                    'seo_filename'  => array('type' => 'STRING', 'description' => 'SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. "underprivileged-children-remedial-education")'),
+                    'auto_category' => array(
+                        'type'        => 'STRING',
+                        'description' => 'Choose the most appropriate category slug for this image from: "education-work", "elderly-care", "empowerment", "environment". If the image does not fit any of these, return an empty string.'
+                    ),
+                    'tags'          => array(
+                        'type'        => 'ARRAY',
+                        'items'       => array('type' => 'STRING'),
                         'description' => 'List of relevant keywords'
                     )
                 ),
-                'required' => array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'tags')
+                'required' => array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'auto_category', 'tags')
             )
         )
     );
@@ -362,8 +367,14 @@ add_action('wp_ajax_assra_ai_import_single', function() {
     set_post_thumbnail($gallery_post_id, $attachment_id);
 
     // Assign Category (taxonomy: assra_program)
-    if (!empty($_POST['category'])) {
+    $category_slug = '';
+    if (!empty($_POST['category']) && $_POST['category'] !== 'auto_detect') {
         $category_slug = sanitize_key($_POST['category']);
+    } elseif (!empty($ai_data['auto_category'])) {
+        $category_slug = sanitize_key($ai_data['auto_category']);
+    }
+
+    if (!empty($category_slug)) {
         $term = get_term_by('slug', $category_slug, 'assra_program');
         if ($term) {
             wp_set_post_terms($gallery_post_id, array($term->term_id), 'assra_program');
@@ -386,8 +397,17 @@ add_action('wp_ajax_assra_ai_import_single', function() {
 
     // Flush gallery transients to keep cache fresh
     delete_transient('assra_gallery_years_all');
-    if (!empty($_POST['category'])) {
-        delete_transient('assra_gallery_years_' . md5(sanitize_key($_POST['category'])));
+    if (!empty($category_slug)) {
+        delete_transient('assra_gallery_years_' . md5($category_slug));
+    }
+
+    // Get the category name to return to UI
+    $assigned_category_name = 'General';
+    if (!empty($category_slug)) {
+        $term = get_term_by('slug', $category_slug, 'assra_program');
+        if ($term) {
+            $assigned_category_name = $term->name;
+        }
     }
 
     wp_send_json_success(array(
@@ -395,6 +415,7 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         'attachment_id'   => $attachment_id,
         'title'           => $ai_data['title'],
         'filename'        => $new_filename,
+        'category'        => $assigned_category_name,
         'preview_url'     => wp_get_attachment_thumb_url($attachment_id),
     ));
 });
