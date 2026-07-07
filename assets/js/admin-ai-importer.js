@@ -22,6 +22,9 @@ jQuery(document).ready(function($) {
     const $queueBody = $('#assra-queue-body');
     const $noFiles = $('#assra-no-files');
     const $progressWrapper = $('#assra-progress-wrapper');
+    const $retryBtn = $('#assra-btn-retry');
+
+    $retryBtn.hide();
 
     // 1. Drag & Drop Event Handlers
     $dropzone.on('click', function() {
@@ -142,6 +145,32 @@ jQuery(document).ready(function($) {
         checkButtons();
     });
 
+    $retryBtn.on('click', function() {
+        if (isProcessing) return;
+
+        isProcessing = true;
+        $startBtn.prop('disabled', true);
+        $retryBtn.prop('disabled', true);
+        $pauseBtn.prop('disabled', false);
+        $cancelBtn.prop('disabled', false);
+        $('#assra-api-key, #assra-category, #assra-year').prop('disabled', true);
+
+        // Reset all failed items in the queue to pending
+        fileQueue.forEach((fileObj, index) => {
+            if (fileObj.status === 'failed') {
+                fileObj.status = 'pending';
+                fileObj.error = '';
+                updateRowStatus(index, 'pending', 'Retrying...');
+                failedCount--;
+                processedCount--;
+            }
+        });
+
+        currentIndex = 0; // Restart scanning queue from the beginning
+        updateStats();
+        processNext();
+    });
+
     $cancelBtn.on('click', function() {
         if (confirm('Are you sure you want to cancel the entire import queue? Already processed images will remain in your Media Library and Gallery.')) {
             isProcessing = false;
@@ -183,6 +212,7 @@ jQuery(document).ready(function($) {
             $startBtn.prop('disabled', false).find('span').text('Start New Import');
             $pauseBtn.prop('disabled', true);
             $('#assra-api-key, #assra-category, #assra-year').prop('disabled', false);
+            checkButtons();
             return;
         }
 
@@ -322,10 +352,20 @@ jQuery(document).ready(function($) {
         if (fileQueue.length > 0) {
             $startBtn.prop('disabled', isProcessing);
             $cancelBtn.prop('disabled', false);
+            
+            if (failedCount > 0 && !isProcessing) {
+                $retryBtn.show().prop('disabled', false);
+            } else {
+                $retryBtn.prop('disabled', true);
+                if (isProcessing) {
+                    $retryBtn.hide();
+                }
+            }
         } else {
             $startBtn.prop('disabled', true);
             $pauseBtn.prop('disabled', true);
             $cancelBtn.prop('disabled', true);
+            $retryBtn.prop('disabled', true).hide();
         }
     }
 

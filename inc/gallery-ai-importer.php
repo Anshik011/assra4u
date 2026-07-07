@@ -130,6 +130,9 @@ function assra_gallery_ai_import_page() {
                     <button class="assra-btn assra-btn-secondary" id="assra-btn-pause" disabled>
                         <i class="dashicons dashicons-controls-pause"></i> Pause
                     </button>
+                    <button class="assra-btn assra-btn-secondary" id="assra-btn-retry" disabled>
+                        <i class="dashicons dashicons-update"></i> Retry Failed
+                    </button>
                     <button class="assra-btn assra-btn-danger" id="assra-btn-cancel" disabled>
                         <i class="dashicons dashicons-no"></i> Cancel Queue
                     </button>
