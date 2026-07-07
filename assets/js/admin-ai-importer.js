@@ -163,7 +163,7 @@ jQuery(document).ready(function($) {
         $startBtn.prop('disabled', true);
         $pauseBtn.prop('disabled', false);
         $cancelBtn.prop('disabled', false);
-        $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', true);
+        $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', true);
 
         processNext();
     });
@@ -183,7 +183,7 @@ jQuery(document).ready(function($) {
         $retryBtn.prop('disabled', true);
         $pauseBtn.prop('disabled', false);
         $cancelBtn.prop('disabled', false);
-        $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', true);
+        $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', true);
 
         // Reset all failed items in the queue to pending
         fileQueue.forEach((fileObj, index) => {
@@ -221,7 +221,7 @@ jQuery(document).ready(function($) {
             $startBtn.prop('disabled', false).find('span').text('Start Import');
             $pauseBtn.prop('disabled', true);
             $cancelBtn.prop('disabled', true);
-            $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', false);
+            $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', false);
             updateStats();
         }
     });
@@ -241,7 +241,7 @@ jQuery(document).ready(function($) {
             alert('AI Bulk Import Completed!');
             $startBtn.prop('disabled', false).find('span').text('Start New Import');
             $pauseBtn.prop('disabled', true);
-            $('#assra-api-provider, #assra-api-key, #assra-category, #assra-year').prop('disabled', false);
+            $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', false);
             checkButtons();
             return;
         }
@@ -260,6 +260,7 @@ jQuery(document).ready(function($) {
         formData.append('image', fileObj.file);
         formData.append('category', $('#assra-category').val());
         formData.append('year', $('#assra-year').val());
+        formData.append('post_type', $('#assra-post-type').val());
 
         // Perform AJAX Request
         $.ajax({
@@ -412,6 +413,21 @@ jQuery(document).ready(function($) {
     function capitalize(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
+
+    // Category visibility toggler based on destination CPT
+    const $postTypeSelect = $('#assra-post-type');
+    const $categoryGroup = $('#assra-category').closest('.assra-form-group');
+
+    function toggleCategoryVisibility() {
+        if ($postTypeSelect.val() === 'media_clip') {
+            $categoryGroup.slideUp(200);
+        } else {
+            $categoryGroup.slideDown(200);
+        }
+    }
+
+    $postTypeSelect.on('change', toggleCategoryVisibility);
+    toggleCategoryVisibility();
 
     // Capitalize first loaded stats
     updateStats();

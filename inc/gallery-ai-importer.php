@@ -108,6 +108,15 @@ function assra_gallery_ai_import_page() {
                     </p>
                 </div>
 
+                <!-- Import Destination -->
+                <div class="assra-form-group">
+                    <label for="assra-post-type">Import Destination</label>
+                    <select id="assra-post-type" class="assra-form-select">
+                        <option value="gallery" selected>Gallery (Photo Album)</option>
+                        <option value="media_clip">Media Coverage (Media Clip)</option>
+                    </select>
+                </div>
+
                 <!-- Program Category -->
                 <div class="assra-form-group">
                     <label for="assra-category">Default Category (Pillar)</label>
@@ -242,6 +251,10 @@ add_action('wp_ajax_assra_ai_import_single', function() {
 
     $uploaded_file = $_FILES['image'];
     $file_path = $uploaded_file['tmp_name'];
+    $post_type = isset($_POST['post_type']) ? sanitize_key($_POST['post_type']) : 'gallery';
+    if (!in_array($post_type, array('gallery', 'media_clip'))) {
+        $post_type = 'gallery';
+    }
 
     // 1. Calculate File Hash for Duplicate Check
     $file_hash = md5_file($file_path);
@@ -332,57 +345,64 @@ add_action('wp_ajax_assra_ai_import_single', function() {
     update_post_meta($attachment_id, '_wp_attachment_image_alt', sanitize_text_field($ai_data['alt_text']));
     update_post_meta($attachment_id, '_attachment_file_hash', $file_hash);
 
-    // 5. Create CPT Gallery Entry Post
+    // 5. Create CPT Entry Post
     $gallery_post_id = wp_insert_post(array(
         'post_title'   => sanitize_text_field($ai_data['title']),
         'post_content' => sanitize_textarea_field($ai_data['description']),
         'post_excerpt' => sanitize_text_field($ai_data['caption']),
         'post_status'  => 'publish',
-        'post_type'    => 'gallery',
+        'post_type'    => $post_type,
     ));
 
     if (is_wp_error($gallery_post_id)) {
         wp_delete_attachment($attachment_id, true); // Delete uploaded attachment if post creation failed
-        wp_send_json_error('Failed to create Gallery post: ' . $gallery_post_id->get_error_message());
+        wp_send_json_error('Failed to create post: ' . $gallery_post_id->get_error_message());
     }
 
     // Link attachment as featured image (post thumbnail)
     set_post_thumbnail($gallery_post_id, $attachment_id);
 
-    // Assign Category (taxonomy: assra_program)
+    // Assign Category (taxonomy: assra_program) - ONLY if post_type is gallery
+    $assigned_category_name = 'General';
     $category_slug = '';
-    if (!empty($_POST['category']) && $_POST['category'] !== 'auto_detect') {
-        $category_slug = sanitize_key($_POST['category']);
-    } elseif (!empty($ai_data['auto_category'])) {
-        $category_slug = sanitize_key($ai_data['auto_category']);
-    }
 
-    // Get list of valid active category slugs from the database
-    $valid_slugs = array();
-    $categories = get_terms(array(
-        'taxonomy'   => 'assra_program',
-        'hide_empty' => false,
-    ));
-    if (!is_wp_error($categories) && !empty($categories)) {
-        foreach ($categories as $cat) {
-            $valid_slugs[] = $cat->slug;
+    if ($post_type === 'gallery') {
+        if (!empty($_POST['category']) && $_POST['category'] !== 'auto_detect') {
+            $category_slug = sanitize_key($_POST['category']);
+        } elseif (!empty($ai_data['auto_category'])) {
+            $category_slug = sanitize_key($ai_data['auto_category']);
         }
-    }
 
-    // Enforce fallback if empty or not in valid slugs list (prevent "General" or uncategorized posts)
-    if (empty($category_slug) || !in_array($category_slug, $valid_slugs)) {
-        if (!empty($valid_slugs)) {
-            $category_slug = $valid_slugs[0]; // Fallback to first active category term
-        } else {
-            $category_slug = '';
+        // Get list of valid active category slugs from the database
+        $valid_slugs = array();
+        $categories = get_terms(array(
+            'taxonomy'   => 'assra_program',
+            'hide_empty' => false,
+        ));
+        if (!is_wp_error($categories) && !empty($categories)) {
+            foreach ($categories as $cat) {
+                $valid_slugs[] = $cat->slug;
+            }
         }
-    }
 
-    if (!empty($category_slug)) {
-        $term = get_term_by('slug', $category_slug, 'assra_program');
-        if ($term) {
-            wp_set_post_terms($gallery_post_id, array($term->term_id), 'assra_program');
+        // Enforce fallback if empty or not in valid slugs list (prevent "General" or uncategorized posts)
+        if (empty($category_slug) || !in_array($category_slug, $valid_slugs)) {
+            if (!empty($valid_slugs)) {
+                $category_slug = $valid_slugs[0]; // Fallback to first active category term
+            } else {
+                $category_slug = '';
+            }
         }
+
+        if (!empty($category_slug)) {
+            $term = get_term_by('slug', $category_slug, 'assra_program');
+            if ($term) {
+                wp_set_post_terms($gallery_post_id, array($term->term_id), 'assra_program');
+                $assigned_category_name = $term->name;
+            }
+        }
+    } else {
+        $assigned_category_name = 'Media Coverage';
     }
 
     // Detect Event Year (EXIF -> Filename -> Fallback Input)
@@ -428,18 +448,26 @@ add_action('wp_ajax_assra_ai_import_single', function() {
     }
 
     // Flush gallery transients to keep cache fresh
-    delete_transient('assra_gallery_years_all');
-    if (!empty($category_slug)) {
-        delete_transient('assra_gallery_years_' . md5($category_slug));
+    if ($post_type === 'gallery') {
+        delete_transient('assra_gallery_years_all');
+        if (!empty($category_slug)) {
+            delete_transient('assra_gallery_years_' . md5($category_slug));
+        }
+    } else {
+        delete_transient('assra_media_coverage_all');
     }
 
     // Get the category name to return to UI
     $assigned_category_name = 'General';
-    if (!empty($category_slug)) {
-        $term = get_term_by('slug', $category_slug, 'assra_program');
-        if ($term) {
-            $assigned_category_name = $term->name;
+    if ($post_type === 'gallery') {
+        if (!empty($category_slug)) {
+            $term = get_term_by('slug', $category_slug, 'assra_program');
+            if ($term) {
+                $assigned_category_name = $term->name;
+            }
         }
+    } else {
+        $assigned_category_name = 'Media Coverage';
     }
 
     wp_send_json_success(array(
