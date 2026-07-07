@@ -602,7 +602,7 @@ Return the metadata in structured JSON format according to this schema:
 }";
 
     $request_body = array(
-        'model' => 'google/gemini-2.5-flash:free',
+        'model' => 'meta-llama/llama-3.2-11b-vision-instruct:free',
         'messages' => array(
             array(
                 'role' => 'user',
