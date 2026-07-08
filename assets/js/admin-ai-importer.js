@@ -252,6 +252,10 @@ jQuery(document).ready(function($) {
             return;
         }
 
+        const fileObj = fileQueue[currentIndex];
+        const rowId = `assra-queue-row-${currentIndex}`;
+        const $row = $(`#${rowId}`);
+
         // If PDF, skip WebP canvas compression and upload directly
         if (fileObj.file.type === 'application/pdf') {
             uploadSingleFile(fileObj.file);
