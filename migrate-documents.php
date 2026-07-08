@@ -35,6 +35,11 @@ require_once(ABSPATH . 'wp-admin/includes/image.php');
 require_once(ABSPATH . 'wp-admin/includes/file.php');
 require_once(ABSPATH . 'wp-admin/includes/media.php');
 
+// Force standard browser User-Agent for all WordPress HTTP requests to bypass Cloudflare security filters
+add_filter('http_request_args', function($args) {
+    $args['user-agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    return $args;
+});
 ?>
 <!DOCTYPE html>
 <html lang="en">
