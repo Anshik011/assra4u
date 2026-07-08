@@ -141,6 +141,20 @@ add_filter('http_request_args', function($args) {
                         continue;
                     }
 
+                    // Check if a Document CPT post with this title already exists (excluding trash)
+                    $post_check = new WP_Query(array(
+                        'post_type'      => 'document',
+                        'post_status'    => array('publish', 'draft', 'pending', 'private', 'future'),
+                        'title'          => $doc_name,
+                        'posts_per_page' => 1
+                    ));
+
+                    if ($post_check->have_posts()) {
+                        log_msg("  [SKIP] Document post '{$doc_name}' already exists.", 'warning');
+                        $total_skipped++;
+                        continue;
+                    }
+
                     // Build full URL to download the document
                     $source_url = "https://www.assra4u.org" . $relative_url;
                     log_msg("  Downloading document '{$doc_name}' from: {$source_url} ...", 'info');
@@ -162,8 +176,8 @@ add_filter('http_request_args', function($args) {
                         continue;
                     }
 
-                    // Check if document already imported in Media Library
-                    $duplicate_check = new WP_Query(array(
+                    // Check if document file already exists in Media Library
+                    $duplicate_media_check = new WP_Query(array(
                         'post_type'      => 'attachment',
                         'post_status'    => 'any',
                         'posts_per_page' => 1,
@@ -176,37 +190,40 @@ add_filter('http_request_args', function($args) {
                         )
                     ));
 
-                    if ($duplicate_check->have_posts()) {
-                        $dup_attachment = $duplicate_check->posts[0];
+                    $attachment_id = 0;
+                    if ($duplicate_media_check->have_posts()) {
+                        // Reuse existing attachment
+                        $dup_attachment = $duplicate_media_check->posts[0];
+                        $attachment_id = $dup_attachment->ID;
                         @unlink($temp_file);
-                        log_msg("  [SKIP] Document '{$doc_name}' is already imported (Duplicate of attachment #{$dup_attachment->ID})", 'warning');
-                        $total_skipped++;
-                        continue;
+                        log_msg("  [INFO] Reusing existing attachment #{$attachment_id} in Media Library.", 'info');
                     }
 
-                    // Sideload the document file into WordPress Media Library
-                    $orig_filename = basename($relative_url);
-                    $file_array = array(
-                        'name'     => $orig_filename,
-                        'tmp_name' => $temp_file
-                    );
+                    if (empty($attachment_id)) {
+                        // Sideload the document file into WordPress Media Library
+                        $orig_filename = basename($relative_url);
+                        $file_array = array(
+                            'name'     => $orig_filename,
+                            'tmp_name' => $temp_file
+                        );
 
-                    // media_handle_sideload moves temp file into uploads directory and registers attachment
-                    $attachment_id = media_handle_sideload($file_array, 0);
+                        // media_handle_sideload moves temp file into uploads directory and registers attachment
+                        $attachment_id = media_handle_sideload($file_array, 0);
 
-                    if (is_wp_error($attachment_id)) {
-                        @unlink($temp_file);
-                        log_msg("  [ERROR] Failed to register sideloaded media: " . $attachment_id->get_error_message(), 'error');
-                        $total_errors++;
-                        continue;
+                        if (is_wp_error($attachment_id)) {
+                            @unlink($temp_file);
+                            log_msg("  [ERROR] Failed to register sideloaded media: " . $attachment_id->get_error_message(), 'error');
+                            $total_errors++;
+                            continue;
+                        }
+
+                        // Save the file hash and update attachment title/details
+                        update_post_meta($attachment_id, '_attachment_file_hash', $file_hash);
+                        wp_update_post(array(
+                            'ID'           => $attachment_id,
+                            'post_title'   => $doc_name,
+                        ));
                     }
-
-                    // Save the file hash and update attachment title/details
-                    update_post_meta($attachment_id, '_attachment_file_hash', $file_hash);
-                    wp_update_post(array(
-                        'ID'           => $attachment_id,
-                        'post_title'   => $doc_name,
-                    ));
 
                     // Determine Document Type term dynamically
                     $target_term = $cat_info['default_type']; // default_type is 'certificate' or 'annual-report'
