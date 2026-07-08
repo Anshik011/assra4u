@@ -101,9 +101,9 @@ jQuery(document).ready(function($) {
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             
-            // Only allow images
-            if (!file.type.match('image.*')) {
-                alert(`File "${file.name}" is not an image and will be skipped.`);
+            // Allow images and PDFs
+            if (!file.type.match('image.*') && file.type !== 'application/pdf') {
+                alert(`File "${file.name}" is not an image or PDF and will be skipped.`);
                 continue;
             }
 
@@ -136,10 +136,16 @@ jQuery(document).ready(function($) {
             $queueBody.append($row);
 
             // Load thumbnail preview
-            reader.onload = function(e) {
-                $(`#${rowId} .assra-thumb-preview`).attr('src', e.target.result);
-            };
-            reader.readAsDataURL(file);
+            if (file.type === 'application/pdf') {
+                $(`#${rowId} .assra-thumb-preview`)
+                    .attr('src', 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="%23e74c3c"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>')
+                    .css('object-fit', 'contain');
+            } else {
+                reader.onload = function(e) {
+                    $(`#${rowId} .assra-thumb-preview`).attr('src', e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         updateStats();
@@ -163,7 +169,7 @@ jQuery(document).ready(function($) {
         $startBtn.prop('disabled', true);
         $pauseBtn.prop('disabled', false);
         $cancelBtn.prop('disabled', false);
-        $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', true);
+        $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-doc-type, #assra-year').prop('disabled', true);
 
         processNext();
     });
@@ -183,7 +189,7 @@ jQuery(document).ready(function($) {
         $retryBtn.prop('disabled', true);
         $pauseBtn.prop('disabled', false);
         $cancelBtn.prop('disabled', false);
-        $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', true);
+        $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-doc-type, #assra-year').prop('disabled', true);
 
         // Reset all failed items in the queue to pending
         fileQueue.forEach((fileObj, index) => {
@@ -221,7 +227,7 @@ jQuery(document).ready(function($) {
             $startBtn.prop('disabled', false).find('span').text('Start Import');
             $pauseBtn.prop('disabled', true);
             $cancelBtn.prop('disabled', true);
-            $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', false);
+            $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-doc-type, #assra-year').prop('disabled', false);
             updateStats();
         }
     });
@@ -241,37 +247,47 @@ jQuery(document).ready(function($) {
             alert('AI Bulk Import Completed!');
             $startBtn.prop('disabled', false).find('span').text('Start New Import');
             $pauseBtn.prop('disabled', true);
-            $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-year').prop('disabled', false);
+            $('#assra-api-provider, #assra-api-key, #assra-post-type, #assra-category, #assra-doc-type, #assra-year').prop('disabled', false);
             checkButtons();
             return;
         }
 
-        const fileObj = fileQueue[currentIndex];
-        const rowId = `assra-queue-row-${currentIndex}`;
-        const $row = $(`#${rowId}`);
-
-        // Update Row status
-        updateRowStatus(currentIndex, 'uploading', 'Compressing to WebP...');
-
-        // Convert image to WebP client-side before uploading (faster upload, saves CPU)
-        convertToWebP(fileObj.file).then(function(webpFile) {
-            uploadSingleFile(webpFile);
-        }).catch(function(err) {
-            console.warn('WebP conversion failed, falling back to original file:', err);
+        // If PDF, skip WebP canvas compression and upload directly
+        if (fileObj.file.type === 'application/pdf') {
             uploadSingleFile(fileObj.file);
-        });
+        } else {
+            // Update Row status
+            updateRowStatus(currentIndex, 'uploading', 'Compressing to WebP...');
+
+            // Convert image to WebP client-side before uploading (faster upload, saves CPU)
+            convertToWebP(fileObj.file).then(function(webpFile) {
+                uploadSingleFile(webpFile);
+            }).catch(function(err) {
+                console.warn('WebP conversion failed, falling back to original file:', err);
+                uploadSingleFile(fileObj.file);
+            });
+        }
 
         function uploadSingleFile(fileToUpload) {
-            updateRowStatus(currentIndex, 'uploading', 'Uploading image...');
+            updateRowStatus(currentIndex, 'uploading', 'Uploading file...');
+
+            // Determine category or doc type to send
+            let selectedCategory = '';
+            const postType = $('#assra-post-type').val();
+            if (postType === 'gallery') {
+                selectedCategory = $('#assra-category').val();
+            } else if (postType === 'document') {
+                selectedCategory = $('#assra-doc-type').val();
+            }
 
             // Build FormData
             const formData = new FormData();
             formData.append('action', 'assra_ai_import_single');
             formData.append('security', assra_importer_nonce);
             formData.append('image', fileToUpload);
-            formData.append('category', $('#assra-category').val());
+            formData.append('category', selectedCategory);
             formData.append('year', $('#assra-year').val());
-            formData.append('post_type', $('#assra-post-type').val());
+            formData.append('post_type', postType);
 
             // Perform AJAX Request
             $.ajax({
@@ -483,13 +499,20 @@ jQuery(document).ready(function($) {
 
     // Category visibility toggler based on destination CPT
     const $postTypeSelect = $('#assra-post-type');
-    const $categoryGroup = $('#assra-category').closest('.assra-form-group');
+    const $categoryGroup = $('#assra-category-group');
+    const $docTypeGroup = $('#assra-doc-type-group');
 
     function toggleCategoryVisibility() {
-        if ($postTypeSelect.val() === 'media_clip') {
-            $categoryGroup.slideUp(200);
-        } else {
+        const val = $postTypeSelect.val();
+        if (val === 'gallery') {
             $categoryGroup.slideDown(200);
+            $docTypeGroup.slideUp(200);
+        } else if (val === 'document') {
+            $categoryGroup.slideUp(200);
+            $docTypeGroup.slideDown(200);
+        } else {
+            $categoryGroup.slideUp(200);
+            $docTypeGroup.slideUp(200);
         }
     }
 
