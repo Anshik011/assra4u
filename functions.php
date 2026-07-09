@@ -551,7 +551,7 @@ add_shortcode('gallery_filter_bar', function () {
     ob_start();
     ?>
     <div class="gallery-filters-wrapper">
-        <form method="get" action="<?php echo esc_url(get_permalink()); ?>" class="gallery-filter-form">
+        <form method="get" action="<?php echo esc_url(strtok($_SERVER["REQUEST_URI"], '?')); ?>" class="gallery-filter-form">
             <div class="filter-row">
                 <!-- Program Pillars -->
                 <div class="filter-group pillar-group">
@@ -586,7 +586,7 @@ add_shortcode('gallery_filter_bar', function () {
                 <!-- Reset Button -->
                 <?php if (!empty($current_program) || !empty($current_year)) : ?>
                     <div class="filter-group reset-group">
-                        <a href="<?php echo esc_url(get_permalink()); ?>" class="reset-filter-btn">
+                        <a href="<?php echo esc_url(strtok($_SERVER["REQUEST_URI"], '?')); ?>" class="reset-filter-btn">
                             <span class="fa fa-times"></span> Clear Filters
                         </a>
                     </div>
