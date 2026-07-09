@@ -505,18 +505,35 @@ jQuery(document).ready(function($) {
     const $postTypeSelect = $('#assra-post-type');
     const $categoryGroup = $('#assra-category-group');
     const $docTypeGroup = $('#assra-doc-type-group');
+    const $yearGroup = $('#assra-year').closest('.assra-form-group');
+    const $yearLabel = $('label[for="assra-year"]');
 
     function toggleCategoryVisibility() {
         const val = $postTypeSelect.val();
         if (val === 'gallery') {
             $categoryGroup.slideDown(200);
             $docTypeGroup.slideUp(200);
+            $yearGroup.slideDown(200);
+            $yearLabel.text('Gallery Event Year');
         } else if (val === 'document') {
             $categoryGroup.slideUp(200);
             $docTypeGroup.slideDown(200);
+            $yearGroup.slideUp(200);
+        } else if (val === 'award') {
+            $categoryGroup.slideUp(200);
+            $docTypeGroup.slideUp(200);
+            $yearGroup.slideDown(200);
+            $yearLabel.text('Award Year');
+        } else if (val === 'media_clip') {
+            $categoryGroup.slideUp(200);
+            $docTypeGroup.slideUp(200);
+            $yearGroup.slideDown(200);
+            $yearLabel.text('Coverage Year');
         } else {
             $categoryGroup.slideUp(200);
             $docTypeGroup.slideUp(200);
+            $yearGroup.slideDown(200);
+            $yearLabel.text('Gallery Event Year');
         }
     }
 

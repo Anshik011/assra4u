@@ -14,18 +14,19 @@ if (!defined('ABSPATH')) {
    ========================================================================== */
 
 add_action('admin_menu', function () {
-    add_submenu_page(
-        'edit.php?post_type=gallery',
+    add_menu_page(
         'AI Bulk Import',
         'AI Bulk Import',
         'manage_options',
         'assra-gallery-ai-import',
-        'assra_gallery_ai_import_page'
+        'assra_gallery_ai_import_page',
+        'dashicons-cloud-upload',
+        9
     );
 });
 
 add_action('admin_enqueue_scripts', function ($hook) {
-    if ($hook !== 'gallery_page_assra-gallery-ai-import') {
+    if (strpos($hook, 'assra-gallery-ai-import') === false) {
         return;
     }
     
@@ -119,6 +120,7 @@ function assra_gallery_ai_import_page() {
                         <option value="gallery" selected>Gallery (Photo Album)</option>
                         <option value="media_clip">Media Coverage (Media Clip)</option>
                         <option value="document">Document (PDF/Image)</option>
+                        <option value="award">Award (Certificate/Trophy)</option>
                     </select>
                 </div>
 
@@ -462,6 +464,8 @@ add_action('wp_ajax_assra_ai_import_single', function() {
 
         // Save document file URL to custom postmeta (used by universal_loop to render the link)
         update_post_meta($gallery_post_id, 'document_file', wp_get_attachment_url($attachment_id));
+    } elseif ($post_type === 'award') {
+        $assigned_category_name = 'Awards';
     } else {
         $assigned_category_name = 'Media Coverage';
     }
@@ -508,7 +512,11 @@ add_action('wp_ajax_assra_ai_import_single', function() {
     }
 
     // Save Year to postmeta
-    update_post_meta($gallery_post_id, 'gallery_year', $detected_year);
+    if ($post_type === 'award') {
+        update_post_meta($gallery_post_id, 'award_year', $detected_year);
+    } else {
+        update_post_meta($gallery_post_id, 'gallery_year', $detected_year);
+    }
 
     // Store AI-generated Tags (postmeta: gallery_tags)
     if (!empty($ai_data['tags']) && is_array($ai_data['tags'])) {
@@ -524,6 +532,8 @@ add_action('wp_ajax_assra_ai_import_single', function() {
         }
     } elseif ($post_type === 'document') {
         delete_transient('assra_menu_doc_types');
+    } elseif ($post_type === 'award') {
+        // No custom transients for awards
     } else {
         delete_transient('assra_media_coverage_all');
     }
@@ -544,6 +554,8 @@ add_action('wp_ajax_assra_ai_import_single', function() {
                 $assigned_category_name = $term->name;
             }
         }
+    } elseif ($post_type === 'award') {
+        $assigned_category_name = 'Awards';
     } else {
         $assigned_category_name = 'Media Coverage';
     }
@@ -621,6 +633,7 @@ function assra_call_ai_vision_api($file_path, $mime_type, $original_filename, $p
  */
 function assra_call_gemini_api($api_key, $image_data, $mime_type, $original_filename, $post_type) {
     $is_document = ($post_type === 'document');
+    $is_award = ($post_type === 'award');
 
     if ($is_document) {
         $prompt = "Analyze this document (image or PDF) for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words. Return the metadata in structured JSON format according to the schema.";
@@ -637,6 +650,21 @@ function assra_call_gemini_api($api_key, $image_data, $mime_type, $original_file
             )
         );
         $required = array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'auto_doc_type', 'tags');
+    } elseif ($is_award) {
+        $prompt = "Analyze this award certificate or trophy photo for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words. Return the metadata in structured JSON format according to the schema. For detected_year, try to visually inspect the certificate or trophy for the year it was issued. If no year is visually identifiable, return 0.";
+        $properties = array(
+            'title'         => array('type' => 'STRING'),
+            'alt_text'      => array('type' => 'STRING'),
+            'caption'       => array('type' => 'STRING'),
+            'description'   => array('type' => 'STRING'),
+            'seo_filename'  => array('type' => 'STRING'),
+            'detected_year' => array('type' => 'INTEGER'),
+            'tags'          => array(
+                'type'  => 'ARRAY',
+                'items' => array('type' => 'STRING')
+            )
+        );
+        $required = array('title', 'alt_text', 'caption', 'description', 'seo_filename', 'detected_year', 'tags');
     } else {
         $prompt = "Analyze this photograph for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words. Return the metadata in structured JSON format according to the schema. For detected_year, try to visually inspect the photograph for any signs of the event year (e.g. banners, signs, posters, t-shirts, calendars). If no year is visually identifiable, return 0.";
         $properties = array(
@@ -722,6 +750,7 @@ function assra_call_openrouter_api($api_key, $image_data, $mime_type, $original_
     }
 
     $is_document = ($post_type === 'document');
+    $is_award = ($post_type === 'award');
 
     if ($is_document) {
         $prompt = "Analyze this document (image or PDF) for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words.
@@ -733,6 +762,18 @@ Return the metadata in structured JSON format according to this schema:
   \"description\": \"Detailed description of the document contents, sections, and findings\",
   \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'assra-annual-audited-financial-report-2023-24')\",
   \"auto_doc_type\": \"Classify the document into one of these category slugs based on its content: 'annual-report', 'certificate'. Choose the closest matching slug.\",
+  \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
+}";
+    } elseif ($is_award) {
+        $prompt = "Analyze this award certificate or trophy photo for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words.
+Return the metadata in structured JSON format according to this schema:
+{
+  \"title\": \"A descriptive, human-quality title suitable for the award (e.g. 'ASSRA Best Community Impact Award 2024')\",
+  \"alt_text\": \"Short descriptive alt text for accessibility\",
+  \"caption\": \"Brief caption summarizing the award\",
+  \"description\": \"Detailed description of the award and what it was presented for\",
+  \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'assra-best-community-impact-award-2024')\",
+  \"detected_year\": 2024, // Try to visually inspect the certificate or trophy for the year it was issued. If no year is visually identifiable, return 0.
   \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
 }";
     } else {
@@ -819,6 +860,7 @@ function assra_call_groq_api($api_key, $image_data, $mime_type, $original_filena
     }
 
     $is_document = ($post_type === 'document');
+    $is_award = ($post_type === 'award');
 
     if ($is_document) {
         $prompt = "Analyze this document (image or PDF) for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words.
@@ -830,6 +872,18 @@ Return the metadata in structured JSON format according to this schema:
   \"description\": \"Detailed description of the document contents, sections, and findings\",
   \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'assra-annual-audited-financial-report-2023-24')\",
   \"auto_doc_type\": \"Classify the document into one of these category slugs based on its content: 'annual-report', 'certificate'. Choose the closest matching slug.\",
+  \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
+}";
+    } elseif ($is_award) {
+        $prompt = "Analyze this award certificate or trophy photo for a non-profit NGO website named ASSRA. Generate descriptive metadata. The title and descriptions must look professional and human-written, avoiding generic words.
+Return the metadata in structured JSON format according to this schema:
+{
+  \"title\": \"A descriptive, human-quality title suitable for the award (e.g. 'ASSRA Best Community Impact Award 2024')\",
+  \"alt_text\": \"Short descriptive alt text for accessibility\",
+  \"caption\": \"Brief caption summarizing the award\",
+  \"description\": \"Detailed description of the award and what it was presented for\",
+  \"seo_filename\": \"SEO friendly slug filename (lowercase, hyphenated, no spaces, no extension, e.g. 'assra-best-community-impact-award-2024')\",
+  \"detected_year\": 2024, // Try to visually inspect the certificate or trophy for the year it was issued. If no year is visually identifiable, return 0.
   \"tags\": [\"keyword1\", \"keyword2\", \"keyword3\"]
 }";
     } else {
