@@ -49,13 +49,13 @@ add_action('init', function () {
         'label' => 'Programs (Pillars)', 'hierarchical' => true, 'show_admin_column' => true, 'show_in_rest' => true, 'rewrite' => ['slug' => 'program-filter'],
     ]);
     register_post_type('gallery', [
-        'labels' => ['name' => 'Gallery', 'singular_name' => 'Photo Album'], 'public' => true, 'menu_icon' => 'dashicons-format-gallery', 'supports' => ['title', 'editor', 'thumbnail', 'excerpt'], 'has_archive' => true, 'taxonomies' => ['assra_program'],
+        'labels' => ['name' => 'Gallery', 'singular_name' => 'Photo Album'], 'public' => true, 'menu_icon' => 'dashicons-format-gallery', 'supports' => ['title', 'editor', 'thumbnail', 'excerpt', 'page-attributes'], 'has_archive' => true, 'taxonomies' => ['assra_program'],
     ]);
     register_taxonomy('doc_type', ['document'], [
         'label' => 'Document Types', 'hierarchical' => true, 'show_admin_column' => true, 'rewrite' => ['slug' => 'doc-type'],
     ]);
     register_post_type('document', [
-        'labels' => ['name' => 'Documents', 'singular_name' => 'Document'], 'public' => true, 'menu_icon' => 'dashicons-media-document', 'supports' => ['title', 'custom-fields'], 'has_archive' => true, 'taxonomies' => ['doc_type'],
+        'labels' => ['name' => 'Documents', 'singular_name' => 'Document'], 'public' => true, 'menu_icon' => 'dashicons-media-document', 'supports' => ['title', 'custom-fields', 'page-attributes'], 'has_archive' => true, 'taxonomies' => ['doc_type'],
     ]);
     register_post_type('assra_inquiry', [
         'labels' => ['name' => 'Web Inquiries', 'singular_name' => 'Inquiry'], 'public' => false, 'show_ui' => true, 'menu_icon' => 'dashicons-email', 'supports' => ['title', 'editor', 'custom-fields'], 'capabilities' => ['create_posts' => false],
@@ -64,21 +64,21 @@ add_action('init', function () {
         'labels' => ['name' => 'Volunteer Apps', 'singular_name' => 'Volunteer App'], 'public' => false, 'show_ui' => true, 'menu_icon' => 'dashicons-groups', 'supports' => ['title', 'editor', 'custom-fields'], 'capabilities' => ['create_posts' => false],
     ]);
     register_post_type('board_member', [
-        'labels' => ['name' => 'Board Members', 'singular_name' => 'Member'], 'public' => true, 'menu_icon' => 'dashicons-businessperson', 'supports' => ['title', 'thumbnail', 'excerpt'],
+        'labels' => ['name' => 'Board Members', 'singular_name' => 'Member'], 'public' => true, 'menu_icon' => 'dashicons-businessperson', 'supports' => ['title', 'thumbnail', 'excerpt', 'page-attributes'],
     ]);
     register_post_type('media_clip', [
-        'labels' => ['name' => 'Media Coverage', 'singular_name' => 'Media Clip'], 'public' => true, 'menu_icon' => 'dashicons-megaphone', 'supports' => ['title', 'thumbnail'],
+        'labels' => ['name' => 'Media Coverage', 'singular_name' => 'Media Clip'], 'public' => true, 'menu_icon' => 'dashicons-megaphone', 'supports' => ['title', 'thumbnail', 'page-attributes'],
     ]);
     register_post_type('partner', [
-        'labels' => ['name' => 'Top Donors', 'singular_name' => 'Donor'], 'public' => true, 'menu_icon' => 'dashicons-heart', 'supports' => ['title', 'thumbnail'],
+        'labels' => ['name' => 'Top Donors', 'singular_name' => 'Donor'], 'public' => true, 'menu_icon' => 'dashicons-heart', 'supports' => ['title', 'thumbnail', 'page-attributes'],
     ]);
     register_post_type('voice', [
         'labels' => ['name' => 'Community Voices', 'singular_name' => 'Voice'], 'public' => true, 
-'menu_icon' => 'dashicons-testimonial', 'supports' => ['title', 'editor', 'custom-fields'],
+'menu_icon' => 'dashicons-testimonial', 'supports' => ['title', 'editor', 'custom-fields', 'page-attributes'],
     ]);
     register_post_type('award', [
         'labels' => ['name' => 'Awards', 'singular_name' => 'Award'], 'public' => true, 
-'menu_icon' => 'dashicons-awards', 'supports' => ['title', 'editor', 'custom-fields'],
+'menu_icon' => 'dashicons-awards', 'supports' => ['title', 'editor', 'custom-fields', 'page-attributes'],
     ]);
 });
 
@@ -783,8 +783,12 @@ function utw_universal_loop_handler($atts, $content = null) {
         }
     }
 
-    $orderby = 'date ID'; $order = 'DESC';
-    if (in_array($atts['type'], ['board_member','board','partner'])) { $orderby = 'menu_order'; $order = 'ASC'; }
+    // Order by menu_order (custom dragged order) first, falling back to date and ID descending
+    $orderby = [
+        'menu_order' => 'ASC',
+        'date'       => 'DESC',
+        'ID'         => 'DESC'
+    ];
     
     $paged = (get_query_var('paged')) ? get_query_var('paged') : ( (isset($_GET['paged'])) ? intval($_GET['paged']) : 1 );
     $args = [
@@ -792,8 +796,7 @@ function utw_universal_loop_handler($atts, $content = null) {
         'posts_per_page' => $atts['count'],
         'post_status'    => 'publish',
         'paged'          => $paged,
-        'orderby'        => $orderby,
-        'order'          => $order
+        'orderby'        => $orderby
     ];
 
     if (!empty($atts['taxonomy']) && !empty($atts['term'])) {
@@ -1378,4 +1381,132 @@ add_action('save_post_gallery', function () {
         }
     }
     delete_transient('assra_gallery_years_all');
+});
+
+/* ==========================================================================
+   9. ADMIN DRAG & DROP POST REORDERING
+   ========================================================================== */
+
+add_action('admin_enqueue_scripts', function ($hook) {
+    if ($hook === 'edit.php') {
+        $post_type = isset($_GET['post_type']) ? sanitize_key($_GET['post_type']) : 'post';
+        $supported_types = ['gallery', 'document', 'board_member', 'media_clip', 'partner', 'award', 'voice'];
+        if (in_array($post_type, $supported_types)) {
+            wp_enqueue_script('jquery-ui-sortable');
+            add_action('admin_footer', 'assra_render_admin_sorting_js');
+        }
+    }
+});
+
+function assra_render_admin_sorting_js() {
+    $nonce = wp_create_nonce('assra_sort_nonce');
+    ?>
+    <style>
+        table.wp-list-table tbody tr {
+            cursor: move;
+        }
+        table.wp-list-table tbody tr.ui-sortable-helper {
+            background-color: #f7f7f7 !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: table !important;
+        }
+        table.wp-list-table tbody tr.ui-state-highlight {
+            background-color: #f0fdf4 !important;
+            border: 2px dashed #28a745 !important;
+            height: 48px;
+        }
+    </style>
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            var $table = $('table.wp-list-table tbody');
+            
+            $table.sortable({
+                items: 'tr',
+                cursor: 'move',
+                axis: 'y',
+                placeholder: 'ui-state-highlight',
+                helper: function(e, tr) {
+                    var $originals = tr.children();
+                    var $helper = tr.clone();
+                    $helper.children().each(function(index) {
+                        $(this).width($originals.eq(index).width());
+                    });
+                    return $helper;
+                },
+                start: function(e, ui) {
+                    ui.placeholder.height(ui.item.height());
+                },
+                update: function(event, ui) {
+                    var postIds = [];
+                    $table.find('tr').each(function() {
+                        var idAttr = $(this).attr('id');
+                        if (idAttr) {
+                            var id = idAttr.replace('post-', '');
+                            postIds.push(parseInt(id));
+                        }
+                    });
+                    
+                    if (postIds.length === 0) return;
+
+                    $table.css('opacity', 0.5);
+
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            action: 'assra_update_post_order',
+                            post_ids: postIds,
+                            nonce: '<?php echo $nonce; ?>'
+                        },
+                        success: function(response) {
+                            $table.css('opacity', 1);
+                            if (!response.success) {
+                                alert('Failed to save order: ' + (response.data || 'Unknown error'));
+                            }
+                        },
+                        error: function() {
+                            $table.css('opacity', 1);
+                            alert('Network error while saving order.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+    <?php
+}
+
+add_action('wp_ajax_assra_update_post_order', function() {
+    check_ajax_referer('assra_sort_nonce', 'nonce');
+    if (!current_user_can('edit_posts')) {
+        wp_send_json_error('Forbidden: insufficient permissions.');
+    }
+
+    if (empty($_POST['post_ids']) || !is_array($_POST['post_ids'])) {
+        wp_send_json_error('No post IDs received.');
+    }
+
+    global $wpdb;
+    $menu_order = 1;
+    foreach ($_POST['post_ids'] as $post_id) {
+        $post_id = intval($post_id);
+        if ($post_id > 0) {
+            $wpdb->update(
+                $wpdb->posts,
+                ['menu_order' => $menu_order],
+                ['ID' => $post_id]
+            );
+            clean_post_cache($post_id);
+            $menu_order++;
+        }
+    }
+
+    // Flush transients
+    delete_transient('assra_gallery_years_all');
+    delete_transient('assra_menu_programs');
+    delete_transient('assra_menu_doc_types');
+    delete_transient('assra_media_coverage_all');
+
+    wp_send_json_success('Order updated successfully.');
 });
