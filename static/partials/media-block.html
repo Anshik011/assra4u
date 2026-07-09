@@ -23,20 +23,16 @@
                 </div>
                 
                 <!-- Title (SEO-friendly) -->
-                <h3 class="gallery-card-title" style="font-size: 18px; font-weight: 700; color: #1a365d; margin-bottom: 10px; line-height: 1.4em;">
-                    {title}
+                <h3 class="gallery-card-title" style="font-size: 18px; font-weight: 700; margin-bottom: 10px; line-height: 1.4em;">
+                    <a href="{image}" class="lightbox-image" data-fancybox="gallery" data-caption="{title}" style="color: #1a365d; text-decoration: none; transition: color 0.2s;">
+                        {title}
+                    </a>
                 </h3>
                 
                 <!-- Description Excerpt (SEO and Data) -->
                 <p class="gallery-card-text" style="font-size: 14px; color: #718096; line-height: 1.6em; margin-bottom: 0;">
                     {text}
                 </p>
-            </div>
-            
-            <div style="margin-top: 15px; border-top: 1px solid #f5f5f5; padding-top: 15px;">
-                <a href="{image}" class="lightbox-image text-link" data-fancybox="gallery" data-caption="{title}" style="font-size: 14px; font-weight: 700; color: #28a745; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                    View Clipping <span class="fa fa-arrow-right" style="font-size: 12px;"></span>
-                </a>
             </div>
         </div>
     </div>
@@ -53,6 +49,10 @@
     }
     .gallery-card:hover .overlay-box {
         opacity: 1;
+    }
+    
+    .gallery-card-title a:hover {
+        color: #28a745 !important;
     }
     
     .badge-general {
