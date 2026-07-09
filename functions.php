@@ -753,6 +753,10 @@ function utw_universal_loop_handler($atts, $content = null) {
         'layout'     => '',
     ], $atts);
 
+    if ($atts['type'] === 'document' && $atts['count'] == 12) {
+        $atts['count'] = -1;
+    }
+
     $current_pillar = $atts['term'];
     if (empty($atts['taxonomy']) && empty($atts['term']) && is_page()) {
         $s = $post->post_name;
@@ -824,6 +828,9 @@ function utw_universal_loop_handler($atts, $content = null) {
     } elseif ($atts['type'] === 'document' && $atts['layout'] === 'table') {
         $template_html = '
         <tr>
+            <td style="padding: 20px; font-size: 16px; border-bottom: 1px solid #eee; color: #666; text-align: center; font-weight: 500;">
+                {sn}
+            </td>
             <td style="padding: 20px; font-size: 16px; border-bottom: 1px solid #eee; font-weight: 500; text-align: left;">
                 <span class="far fa-file-pdf" style="color: #e53e3e; margin-right: 10px;"></span> {title}
             </td>
@@ -840,6 +847,11 @@ function utw_universal_loop_handler($atts, $content = null) {
 
     if (empty($template_html)) {
         return '';
+    }
+
+    $sn_counter = 1;
+    if ($paged > 1 && $atts['count'] > 0) {
+        $sn_counter = (($paged - 1) * $atts['count']) + 1;
     }
 
     $output = '';
@@ -863,8 +875,8 @@ function utw_universal_loop_handler($atts, $content = null) {
 
         $doc_file = get_post_meta($id, 'document_file', true) ?: '#';
         $output .= str_replace(
-            ['{title}','{link}','{text}','{image}','{day}','{month}','{year}','{item_subtitle_html}','{item_location_html}','{full_text}','{award_year}','{program_name}','{program_slug}','{gallery_year}','{document_file}','{post_id}','{subtitle}','{location}'],
-            [esc_html(get_the_title()),get_permalink(),get_the_excerpt(),esc_url($img).'" loading="lazy',get_the_date('d'),get_the_date('M'),$item_year,$subtitle_html,$location_html,get_the_content(),esc_html($award_year),esc_html($program_name),esc_attr($program_slug),esc_html($item_year),esc_url($doc_file),intval($id),esc_html($subtitle),esc_html($location)],
+            ['{title}','{link}','{text}','{image}','{day}','{month}','{year}','{item_subtitle_html}','{item_location_html}','{full_text}','{award_year}','{program_name}','{program_slug}','{gallery_year}','{document_file}','{post_id}','{subtitle}','{location}','{sn}'],
+            [esc_html(get_the_title()),get_permalink(),get_the_excerpt(),esc_url($img).'" loading="lazy',get_the_date('d'),get_the_date('M'),$item_year,$subtitle_html,$location_html,get_the_content(),esc_html($award_year),esc_html($program_name),esc_attr($program_slug),esc_html($item_year),esc_url($doc_file),intval($id),esc_html($subtitle),esc_html($location),$sn_counter++],
             $template_html
         );
     endwhile;
