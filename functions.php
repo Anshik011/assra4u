@@ -783,7 +783,7 @@ function utw_universal_loop_handler($atts, $content = null) {
         }
     }
 
-    $orderby = 'date'; $order = 'DESC';
+    $orderby = 'date ID'; $order = 'DESC';
     if (in_array($atts['type'], ['board_member','board','partner'])) { $orderby = 'menu_order'; $order = 'ASC'; }
     
     $paged = (get_query_var('paged')) ? get_query_var('paged') : ( (isset($_GET['paged'])) ? intval($_GET['paged']) : 1 );
