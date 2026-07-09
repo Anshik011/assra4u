@@ -13,19 +13,7 @@
 <section class="gallery-page-section">
     <div class="auto-container">
         <div class="row clearfix">
-            [universal_loop type="media_clip" count="12" pagination="true"]
-            <div class="gallery-item col-lg-4 col-md-6 col-sm-12">
-                <div class="inner-box">
-                    <figure class="image-box" style="background: #e9ecef; min-height: 250px;">
-                        <img src="{image}" alt="{title}" onerror="this.onerror=null; this.src='images/resource/no-image.webp';" style="width: 100%; height: 250px; object-fit: cover;">
-                        <div class="overlay-box"><a href="{image}" class="lightbox-image" data-fancybox="gallery"><span class="fa fa-search"></span></a></div>
-                    </figure>
-                    <div class="lower-content" style="padding: 15px; text-align: center; background: #f9f9f9;">
-                        <h4>{title}</h4>
-                    </div>
-                </div>
-            </div>
-            [/universal_loop]
+            [universal_loop type="media_clip" template="media-block.html" pagination="true" count="12"]
         </div>
     </div>
 </section>
